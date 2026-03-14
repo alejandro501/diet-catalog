@@ -15,6 +15,7 @@
   --green-3: #dbf4df;
   --green-4: #a8e0b5;
   --shadow: 0 20px 60px rgba(31, 84, 49, 0.12);
+  --button-radius: 14px;
 }
 
 * {
@@ -35,6 +36,7 @@ select {
 
 button {
   cursor: pointer;
+  border-radius: var(--button-radius);
 }
 
 input,
@@ -113,7 +115,7 @@ select {
 .shared-link,
 .menu-link {
   border: 1px solid rgba(243, 255, 244, 0.14);
-  border-radius: 14px;
+  border-radius: var(--button-radius);
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.12);
   color: inherit;
@@ -160,7 +162,7 @@ select {
 .auth-form button,
 .primary-button {
   border: 0;
-  border-radius: 14px;
+  border-radius: var(--button-radius);
   padding: 12px 16px;
 }
 
@@ -187,16 +189,23 @@ select {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   min-height: 100vh;
+  align-items: start;
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 24px;
+  height: 100vh;
+  min-height: 100vh;
   padding: 28px;
   background: linear-gradient(180deg, #12311c 0%, #1d4c2b 100%);
   color: #f3fff4;
+  overflow-y: auto;
 }
 
 .sidebar-topbar {
@@ -303,7 +312,7 @@ select {
   align-items: center;
   gap: 10px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--button-radius);
   padding: 11px 14px;
   background: rgba(255, 255, 255, 0.82);
   color: var(--text);
@@ -355,7 +364,32 @@ select {
 }
 
 .content {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content-body {
+  flex: 1;
   padding: 28px;
+}
+
+.site-footer {
+  margin-top: 24px;
+  padding: 28px 24px 34px;
+  border-top: 2px solid var(--green-1);
+  background: linear-gradient(180deg, rgba(219, 244, 223, 0.88), rgba(234, 248, 236, 0.96));
+  color: var(--green-1);
+  font-family: "Courier New", "Consolas", monospace;
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.site-footer p {
+  margin: 0;
+  opacity: 0.96;
 }
 
 .page-header-card {
@@ -488,9 +522,30 @@ select {
 }
 
 .share-recipient-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid rgba(31, 111, 63, 0.18);
   background: rgba(219, 244, 223, 0.85);
   color: var(--green-1);
+}
+
+.share-recipient-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: var(--button-radius);
+  color: inherit;
+}
+
+.share-recipient-remove svg {
+  width: 14px;
+  height: 14px;
 }
 
 .hero-stats {
@@ -645,7 +700,7 @@ select {
 
 .remove-button,
 .secondary-button {
-  border-radius: 14px;
+  border-radius: var(--button-radius);
   padding: 12px 16px;
 }
 
@@ -1071,6 +1126,10 @@ select {
   }
 
   .sidebar {
+    position: static;
+    top: auto;
+    align-self: stretch;
+    height: auto;
     padding-bottom: 20px;
   }
 
@@ -1119,10 +1178,15 @@ select {
     background: rgba(12, 24, 17, 0.28);
   }
 
-  .content,
+  .content-body,
   .sidebar,
   .auth-shell {
     padding: 18px;
+  }
+
+  .site-footer {
+    margin-top: 18px;
+    padding: 22px 18px 28px;
   }
 
   .topbar {
@@ -1259,7 +1323,7 @@ select {
   .compact-ingredient-form .secondary-button,
   .smoothie-ingredient-builder .secondary-button {
     padding: 8px 10px;
-    border-radius: 12px;
+    border-radius: var(--button-radius);
     font-size: 0.9rem;
   }
 

@@ -262,7 +262,10 @@ function App() {
   }, [profiles, user?.uid]);
 
   const shareableProfiles = useMemo(() => {
-    return profiles.filter((profileEntry) => profileEntry.isPublic && profileEntry.id !== user?.uid);
+    return profiles.map((profileEntry) => ({
+      ...profileEntry,
+      isSelf: profileEntry.id === user?.uid,
+    }));
   }, [profiles, user?.uid]);
 
   const profileMap = useMemo(() => {
@@ -778,6 +781,10 @@ function App() {
       return;
     }
 
+    if (recipientProfile.id === user.uid) {
+      return;
+    }
+
     const nextRecipientIds = [...new Set([...(activeDietShare?.recipientIds ?? []), recipientProfile.id])];
 
     try {
@@ -1211,127 +1218,133 @@ function App() {
       {mobileMenuOpen ? <button type="button" className="mobile-backdrop" onClick={() => setMobileMenuOpen(false)} /> : null}
 
       <main className="content">
-        <div className="topbar">
-          <button
-            type="button"
-            className="mobile-menu-button"
-            onClick={() => setMobileMenuOpen((current) => !current)}
-          >
-            <span className="mobile-menu-icon" aria-hidden="true">
-              |||
-            </span>
-            <span>{textFor(t, 'mobileMenu')}</span>
-          </button>
-          <label className="language-control topbar-language">
-            <span>{textFor(t, 'language')}</span>
-            <select value={language} onChange={(event) => changeLanguage(event.target.value)}>
-              {languageOptions.map((option) => (
-                <option key={option} value={option}>
-                  {t.languages?.[option] ?? translations.en.languages[option]}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="content-body">
+          <div className="topbar">
+            <button
+              type="button"
+              className="mobile-menu-button"
+              onClick={() => setMobileMenuOpen((current) => !current)}
+            >
+              <span className="mobile-menu-icon" aria-hidden="true">
+                |||
+              </span>
+              <span>{textFor(t, 'mobileMenu')}</span>
+            </button>
+            <label className="language-control topbar-language">
+              <span>{textFor(t, 'language')}</span>
+              <select value={language} onChange={(event) => changeLanguage(event.target.value)}>
+                {languageOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {t.languages?.[option] ?? translations.en.languages[option]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {message ? <p className="status-message status-banner">{message}</p> : null}
+
+          <section className="catalog-card page-header-card">
+            <p className="eyebrow">{pageBadge}</p>
+            <h2>{sidebarTitle}</h2>
+          </section>
+
+          {activeView === 'profile' ? (
+            <ProfileView
+              onSave={handleSaveProfile}
+              profileDraft={profileDraft}
+              savingProfile={savingProfile}
+              setProfileDraft={setProfileDraft}
+              t={t}
+            />
+          ) : null}
+
+          {activeView === 'catalog' ? (
+            <CatalogView
+              activeDiet={activeDiet}
+              catalog={catalog}
+              dietTypes={dietTypes}
+              drafts={drafts}
+              filters={filters}
+              foodCategories={foodCategories}
+              handleAddItem={handleAddItem}
+              handleAddDietShareRecipient={handleAddDietShareRecipient}
+              handleAddSmoothie={handleAddSmoothie}
+              handleAddSmoothieIngredient={handleAddSmoothieIngredient}
+              handleDraftChange={handleDraftChange}
+              handleRemoveDietShareRecipient={handleRemoveDietShareRecipient}
+              handleRemoveItem={handleRemoveItem}
+              handleRemoveSmoothie={handleRemoveSmoothie}
+              handleRemoveSmoothieIngredient={handleRemoveSmoothieIngredient}
+              handleToggleDietGlobalShare={handleToggleDietGlobalShare}
+              language={language}
+              shareCandidates={shareableProfiles.filter(
+                (profileEntry) => !activeDietShare?.recipientIds?.includes(profileEntry.id)
+              )}
+              sharedGlobally={activeDietShare?.isGlobal === true}
+              sharedRecipients={activeDietRecipients}
+              setActiveDiet={setActiveDiet}
+              setFilters={setFilters}
+              t={t}
+            />
+          ) : null}
+
+          {activeView === 'users' ? (
+            <UsersView
+              currentUserId={user.uid}
+              profiles={publicProfiles}
+              t={t}
+            />
+          ) : null}
+
+          {activeView === 'shared' ? (
+            <SharedListsView
+              activeDiet={sharedActiveDiet}
+              dietTypes={sharedDietTypes}
+              language={language}
+              loading={sharedLoading}
+              onSelectShare={handleOpenShared}
+              selectedShare={selectedSharedEntry}
+              setActiveDiet={setSharedActiveDiet}
+              sharedCatalog={sharedCatalog}
+              sharedEntries={sharedEntries}
+              t={t}
+            />
+          ) : null}
+
+          {activeView === 'settings' ? (
+            <SettingsView
+              dietDrafts={dietDrafts}
+              foodCategoryDrafts={foodCategoryDrafts}
+              newDietName={newDietName}
+              newFoodCategory={newFoodCategory}
+              onAddDietType={handleAddDietType}
+              onAddFoodCategory={handleAddFoodCategory}
+              onDeleteFoodCategory={handleDeleteFoodCategory}
+              onDeleteDietType={handleDeleteDietType}
+              onEditDietType={handleEditDietType}
+              onEditFoodCategory={handleEditFoodCategory}
+              onSaveDietTypes={handleSaveDietTypes}
+              onToggleDietVisibility={handleToggleDietVisibility}
+              setNewDietName={setNewDietName}
+              setNewFoodCategory={setNewFoodCategory}
+              t={t}
+            />
+          ) : null}
+
+          {activeView === 'contact' ? (
+            <ContactView
+              contactDraft={contactDraft}
+              onChange={handleContactDraftChange}
+              onSubmit={handleContactSubmit}
+              t={t}
+            />
+          ) : null}
         </div>
 
-        {message ? <p className="status-message status-banner">{message}</p> : null}
-
-        <section className="catalog-card page-header-card">
-          <p className="eyebrow">{pageBadge}</p>
-          <h2>{sidebarTitle}</h2>
-        </section>
-
-        {activeView === 'profile' ? (
-          <ProfileView
-            onSave={handleSaveProfile}
-            profileDraft={profileDraft}
-            savingProfile={savingProfile}
-            setProfileDraft={setProfileDraft}
-            t={t}
-          />
-        ) : null}
-
-        {activeView === 'catalog' ? (
-          <CatalogView
-            activeDiet={activeDiet}
-            catalog={catalog}
-            dietTypes={dietTypes}
-            drafts={drafts}
-            filters={filters}
-            foodCategories={foodCategories}
-            handleAddItem={handleAddItem}
-            handleAddDietShareRecipient={handleAddDietShareRecipient}
-            handleAddSmoothie={handleAddSmoothie}
-            handleAddSmoothieIngredient={handleAddSmoothieIngredient}
-            handleDraftChange={handleDraftChange}
-            handleRemoveDietShareRecipient={handleRemoveDietShareRecipient}
-            handleRemoveItem={handleRemoveItem}
-            handleRemoveSmoothie={handleRemoveSmoothie}
-            handleRemoveSmoothieIngredient={handleRemoveSmoothieIngredient}
-            handleToggleDietGlobalShare={handleToggleDietGlobalShare}
-            language={language}
-            shareCandidates={shareableProfiles.filter(
-              (profileEntry) => !activeDietShare?.recipientIds?.includes(profileEntry.id)
-            )}
-            sharedGlobally={activeDietShare?.isGlobal === true}
-            sharedRecipients={activeDietRecipients}
-            setActiveDiet={setActiveDiet}
-            setFilters={setFilters}
-            t={t}
-          />
-        ) : null}
-
-        {activeView === 'users' ? (
-          <UsersView
-            currentUserId={user.uid}
-            profiles={publicProfiles}
-            t={t}
-          />
-        ) : null}
-
-        {activeView === 'shared' ? (
-          <SharedListsView
-            activeDiet={sharedActiveDiet}
-            dietTypes={sharedDietTypes}
-            language={language}
-            loading={sharedLoading}
-            onSelectShare={handleOpenShared}
-            selectedShare={selectedSharedEntry}
-            setActiveDiet={setSharedActiveDiet}
-            sharedCatalog={sharedCatalog}
-            sharedEntries={sharedEntries}
-            t={t}
-          />
-        ) : null}
-
-        {activeView === 'settings' ? (
-          <SettingsView
-            dietDrafts={dietDrafts}
-            foodCategoryDrafts={foodCategoryDrafts}
-            newDietName={newDietName}
-            newFoodCategory={newFoodCategory}
-            onAddDietType={handleAddDietType}
-            onAddFoodCategory={handleAddFoodCategory}
-            onDeleteFoodCategory={handleDeleteFoodCategory}
-            onDeleteDietType={handleDeleteDietType}
-            onEditDietType={handleEditDietType}
-            onEditFoodCategory={handleEditFoodCategory}
-            onSaveDietTypes={handleSaveDietTypes}
-            onToggleDietVisibility={handleToggleDietVisibility}
-            setNewDietName={setNewDietName}
-            setNewFoodCategory={setNewFoodCategory}
-            t={t}
-          />
-        ) : null}
-
-        {activeView === 'contact' ? (
-          <ContactView
-            contactDraft={contactDraft}
-            onChange={handleContactDraftChange}
-            onSubmit={handleContactSubmit}
-            t={t}
-          />
-        ) : null}
+        <footer className="site-footer">
+          <p>&copy; 2026 Alejandro Sol. All rights reserved.</p>
+        </footer>
       </main>
     </div>
   );

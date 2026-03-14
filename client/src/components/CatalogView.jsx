@@ -170,13 +170,20 @@ function CatalogView({
                           key={profile.id}
                           type="button"
                           className="share-search-result"
+                          disabled={profile.isSelf}
                           onClick={() => {
+                            if (profile.isSelf) {
+                              return;
+                            }
                             handleAddDietShareRecipient(profile);
                             setShareSearch('');
                           }}
                         >
                           <strong>{profile.name || profile.username || textFor(t, 'anonymousUser')}</strong>
-                          <small>@{profile.username || 'username'}</small>
+                          <small>
+                            @{profile.username || 'username'}
+                            {profile.isSelf ? ' • You' : ''}
+                          </small>
                         </button>
                       ))}
                     </div>
@@ -189,14 +196,24 @@ function CatalogView({
                   <span className="pill private">{textFor(t, 'dietShareNoSpecificUsers')}</span>
                 ) : (
                   sharedRecipients.map((profile) => (
-                    <button
-                      key={profile.id}
-                      type="button"
-                      className="pill share-recipient-pill"
-                      onClick={() => handleRemoveDietShareRecipient(profile.id)}
-                    >
-                      {profile.name || (profile.username ? `@${profile.username}` : textFor(t, 'anonymousUser'))}
-                    </button>
+                    <div key={profile.id} className="pill share-recipient-pill">
+                      <span>
+                        {profile.name || (profile.username ? `@${profile.username}` : textFor(t, 'anonymousUser'))}
+                      </span>
+                      <button
+                        type="button"
+                        className="share-recipient-remove"
+                        aria-label={`Remove ${profile.name || profile.username || 'user'}`}
+                        onClick={() => handleRemoveDietShareRecipient(profile.id)}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M9 3h6l1 2h4v2H4V5h4l1-2Zm1 6h2v8h-2V9Zm4 0h2v8h-2V9ZM7 9h2v8H7V9Zm-1 10h12l1-12H5l1 12Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   ))
                 )}
               </div>
