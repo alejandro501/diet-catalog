@@ -1,6 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,4 +18,17 @@ const app = hasFirebaseEnv
   : null;
 
 export const auth = app ? getAuth(app) : null;
-export const db = app ? getFirestore(app) : null;
+export const db = app
+  ? getApps().length > 1 || getApps()[0]
+    ? (() => {
+        try {
+          return initializeFirestore(app, {
+            experimentalAutoDetectLongPolling: true,
+            useFetchStreams: false,
+          });
+        } catch {
+          return getFirestore(app);
+        }
+      })()
+    : getFirestore(app)
+  : null;

@@ -146,6 +146,11 @@ select {
   padding: 12px 16px;
 }
 
+.save-button {
+  width: auto;
+  min-width: 180px;
+}
+
 .status-message {
   margin: 16px 0 0;
   padding: 14px 16px;
@@ -162,7 +167,7 @@ select {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   min-height: 100vh;
 }
 
@@ -205,7 +210,10 @@ select {
 }
 
 .sidebar h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
+  max-width: 100%;
+  font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+  line-height: 0.95;
+  overflow-wrap: anywhere;
 }
 
 .sidebar-copy {
@@ -506,6 +514,11 @@ select {
   gap: 20px;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .profile-preview {
   display: flex;
   align-items: center;
@@ -675,6 +688,71 @@ select {
   gap: 10px;
 }
 
+.smoothie-form {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.smoothie-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.smoothie-header,
+.smoothie-actions,
+.ingredient-chip-list {
+  display: flex;
+  gap: 10px;
+}
+
+.smoothie-header {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.smoothie-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.smoothie-body {
+  display: grid;
+  gap: 12px;
+}
+
+.ingredient-chip-list {
+  flex-wrap: wrap;
+}
+
+.ingredient-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(31, 111, 63, 0.18);
+  border-radius: 999px;
+  background: rgba(219, 244, 223, 0.85);
+  color: var(--green-1);
+}
+
+.ingredient-chip.static {
+  cursor: default;
+}
+
+.ingredient-remove {
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  line-height: 1;
+}
+
 @media (max-width: 1080px) {
   .app-shell,
   .shared-layout,
@@ -723,7 +801,9 @@ select {
   .compact-form,
   .settings-form,
   .settings-actions,
-  .settings-row {
+  .settings-row,
+  .smoothie-header,
+  .smoothie-actions {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;

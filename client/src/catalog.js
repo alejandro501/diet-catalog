@@ -56,89 +56,249 @@ export const defaultDietTypes = [
       'An anti-inflammatory pattern leans on colorful plants, beans, nuts, olive oil and fatty fish while cutting back on heavily processed foods. It is commonly used to support overall cardiometabolic health.',
   },
 ];
-export const sectionNames = ['foods', 'drinks', 'vitamins'];
+
+export const sectionNames = ['foods', 'drinks', 'smoothies', 'vitamins'];
+export const defaultFoodCategories = ['Fruits', 'Vegetables', 'Side Dish', 'Protein', 'Grains'];
 
 export const filterOptions = {
-  foods: ['All', 'Fruits', 'Vegetables', 'Side Dish', 'Protein', 'Grains'],
-  drinks: ['All', 'Water', 'Tea', 'Juice', 'Smoothie', 'Coffee'],
+  foods: ['All', ...defaultFoodCategories],
+  drinks: ['All', 'Water', 'Tea', 'Juice', 'Coffee'],
+  smoothies: ['All'],
   vitamins: ['All', 'Omega-3', 'Mineral', 'Vitamin', 'Probiotic', 'Electrolyte'],
 };
 
 export const languageOptions = ['en', 'hu', 'es', 'it'];
 
-export const defaultSeedItems = [
-  { dietName: 'Lyme Friendly', sectionName: 'foods', itemName: 'Wild Blueberries', category: 'Fruits' },
-  { dietName: 'Lyme Friendly', sectionName: 'foods', itemName: 'Spinach', category: 'Vegetables' },
-  { dietName: 'Lyme Friendly', sectionName: 'foods', itemName: 'Grilled Salmon', category: 'Protein' },
-  { dietName: 'Lyme Friendly', sectionName: 'foods', itemName: 'Quinoa', category: 'Grains' },
-  { dietName: 'Lyme Friendly', sectionName: 'drinks', itemName: 'Lemon Water', category: 'Water' },
-  { dietName: 'Lyme Friendly', sectionName: 'drinks', itemName: 'Ginger Tea', category: 'Tea' },
-  { dietName: 'Lyme Friendly', sectionName: 'vitamins', itemName: 'Omega-3', category: 'Omega-3' },
-  { dietName: 'Lyme Friendly', sectionName: 'vitamins', itemName: 'Vitamin D', category: 'Vitamin' },
+const seedPresets = {
+  'Lyme Friendly': {
+    foods: [
+      ['Wild Blueberries', 'Fruits'],
+      ['Pasture-Raised Eggs', 'Protein'],
+      ['Steamed Broccoli', 'Vegetables'],
+      ['Rainbow Carrots', 'Vegetables'],
+      ['Tri-Color Quinoa', 'Grains'],
+    ],
+    drinks: [
+      ['Lemon Mineral Water', 'Water'],
+      ['Fresh Ginger Tulsi Tea', 'Tea'],
+      ['Unsweetened Tart Cherry Juice', 'Juice'],
+    ],
+    smoothies: [
+      ['Blueberry Hemp Smoothie', ['Wild blueberries', 'Hemp hearts', 'Unsweetened almond milk', 'Baby spinach']],
+      ['Pear Ginger Recovery Smoothie', ['Pear', 'Fresh ginger', 'Collagen peptides', 'Coconut water']],
+    ],
+    vitamins: [
+      ['Omega-3 Fish Oil', 'Omega-3'],
+      ['Vitamin D3 + K2', 'Vitamin'],
+      ['Magnesium Glycinate', 'Mineral'],
+      ['Saccharomyces boulardii', 'Probiotic'],
+      ['Trace Mineral Electrolytes', 'Electrolyte'],
+    ],
+  },
+  Mediterranean: {
+    foods: [
+      ['Tomato Cucumber Salad', 'Vegetables'],
+      ['Sardines in Olive Oil', 'Protein'],
+      ['Herbed Chickpeas', 'Protein'],
+      ['Farro Pilaf', 'Grains'],
+      ['Roasted Eggplant', 'Vegetables'],
+    ],
+    drinks: [
+      ['Sparkling Citrus Water', 'Water'],
+      ['Mint Verbena Tea', 'Tea'],
+      ['Pomegranate Spritzer', 'Juice'],
+    ],
+    smoothies: [
+      ['Fig Tahini Smoothie', ['Fresh figs', 'Tahini', 'Greek yogurt', 'Cinnamon']],
+      ['Orange Olive Smoothie', ['Orange', 'Carrot', 'Greek yogurt', 'Olive oil']],
+    ],
+    vitamins: [
+      ['Omega-3 Fish Oil', 'Omega-3'],
+      ['Magnesium Glycinate', 'Mineral'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Lactobacillus Probiotic', 'Probiotic'],
+      ['Potassium Citrate', 'Mineral'],
+    ],
+  },
+  Paleo: {
+    foods: [
+      ['Pasture-Raised Eggs', 'Protein'],
+      ['Grass-Fed Sirloin', 'Protein'],
+      ['Roasted Sweet Potato Wedges', 'Side Dish'],
+      ['Blackberries', 'Fruits'],
+      ['Garlic Asparagus', 'Vegetables'],
+    ],
+    drinks: [
+      ['Lime Spring Water', 'Water'],
+      ['Rooibos Cinnamon Tea', 'Tea'],
+      ['Cold Brew Coffee', 'Coffee'],
+    ],
+    smoothies: [
+      ['Berry Coconut Paleo Smoothie', ['Blackberries', 'Coconut milk', 'Collagen peptides', 'Chia seeds']],
+      ['Mango Cashew Smoothie', ['Mango', 'Cashew butter', 'Coconut water', 'Turmeric']],
+    ],
+    vitamins: [
+      ['Vitamin D3', 'Vitamin'],
+      ['Magnesium Malate', 'Mineral'],
+      ['Electrolyte Minerals', 'Electrolyte'],
+      ['Cod Liver Oil', 'Omega-3'],
+      ['Soil-Based Probiotic', 'Probiotic'],
+    ],
+  },
+  Ketogenic: {
+    foods: [
+      ['Avocado', 'Fruits'],
+      ['Smoked Salmon', 'Protein'],
+      ['Cauliflower Mash', 'Side Dish'],
+      ['Sauteed Spinach', 'Vegetables'],
+      ['Zucchini Noodles', 'Vegetables'],
+    ],
+    drinks: [
+      ['Electrolyte Water', 'Water'],
+      ['Espresso', 'Coffee'],
+      ['Iced Matcha', 'Tea'],
+    ],
+    smoothies: [
+      ['Avocado Cacao Keto Smoothie', ['Avocado', 'Unsweetened cocoa', 'Coconut milk', 'MCT oil']],
+      ['Vanilla Chia Keto Smoothie', ['Vanilla protein', 'Chia seeds', 'Unsweetened almond milk', 'Spinach']],
+    ],
+    vitamins: [
+      ['Magnesium Bisglycinate', 'Mineral'],
+      ['Sodium Potassium Electrolytes', 'Electrolyte'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Algae Omega-3', 'Omega-3'],
+      ['Broad-Spectrum Probiotic', 'Probiotic'],
+    ],
+  },
+  'Low GI': {
+    foods: [
+      ['Steel-Cut Oats', 'Grains'],
+      ['Green Lentils', 'Protein'],
+      ['Pink Lady Apple', 'Fruits'],
+      ['Roasted Brussels Sprouts', 'Vegetables'],
+      ['Pearl Barley', 'Grains'],
+    ],
+    drinks: [
+      ['Cucumber Water', 'Water'],
+      ['Unsweetened Green Tea', 'Tea'],
+      ['Fresh Tomato Juice', 'Juice'],
+    ],
+    smoothies: [
+      ['Berry Flax Balance Smoothie', ['Raspberries', 'Ground flaxseed', 'Kefir', 'Spinach']],
+      ['Pear Oat Smoothie', ['Pear', 'Steel-cut oat milk', 'Greek yogurt', 'Cinnamon']],
+    ],
+    vitamins: [
+      ['Chromium Picolinate', 'Mineral'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Psyllium Fiber Complex', 'Vitamin'],
+      ['Omega-3 Capsules', 'Omega-3'],
+      ['Multi-Strain Probiotic', 'Probiotic'],
+    ],
+  },
+  ADHD: {
+    foods: [
+      ['Pasture-Raised Eggs', 'Protein'],
+      ['Wild Salmon', 'Protein'],
+      ['Baby Spinach', 'Vegetables'],
+      ['Blueberries', 'Fruits'],
+      ['Slow-Cooked Oat Groats', 'Grains'],
+    ],
+    drinks: [
+      ['Electrolyte Water', 'Water'],
+      ['Unsweetened Peppermint Tea', 'Tea'],
+      ['Cacao Almond Drink', 'Juice'],
+    ],
+    smoothies: [
+      ['Blueberry Focus Smoothie', ['Blueberries', 'Greek yogurt', 'Pumpkin seeds', 'Baby spinach']],
+      ['Cherry Cacao Smoothie', ['Tart cherries', 'Cacao nibs', 'Protein powder', 'Unsweetened almond milk']],
+    ],
+    vitamins: [
+      ['High-DHA Omega-3', 'Omega-3'],
+      ['Magnesium Glycinate', 'Mineral'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Zinc Bisglycinate', 'Mineral'],
+      ['Bifidobacterium Probiotic', 'Probiotic'],
+    ],
+  },
+  DASH: {
+    foods: [
+      ['Banana', 'Fruits'],
+      ['Low-Fat Greek Yogurt', 'Protein'],
+      ['Black Beans', 'Protein'],
+      ['Brown Rice', 'Grains'],
+      ['Roasted Beet Medley', 'Vegetables'],
+    ],
+    drinks: [
+      ['Lemon Water', 'Water'],
+      ['Hibiscus Tea', 'Tea'],
+      ['Beet Berry Juice', 'Juice'],
+    ],
+    smoothies: [
+      ['Berry Kefir Smoothie', ['Blueberries', 'Kefir', 'Oats', 'Ground flaxseed']],
+      ['Banana Beet Smoothie', ['Banana', 'Cooked beet', 'Greek yogurt', 'Cinnamon']],
+    ],
+    vitamins: [
+      ['Potassium Citrate', 'Mineral'],
+      ['Calcium Citrate', 'Mineral'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Omega-3 Fish Oil', 'Omega-3'],
+      ['Lactobacillus Probiotic', 'Probiotic'],
+    ],
+  },
+  'Anti-Inflammatory': {
+    foods: [
+      ['Turmeric Roasted Cauliflower', 'Vegetables'],
+      ['Walnuts', 'Protein'],
+      ['Wild Salmon', 'Protein'],
+      ['Blackberries', 'Fruits'],
+      ['Buckwheat Groats', 'Grains'],
+    ],
+    drinks: [
+      ['Lemon Ginger Water', 'Water'],
+      ['Green Tea with Jasmine', 'Tea'],
+      ['Pomegranate Tart Cherry Blend', 'Juice'],
+    ],
+    smoothies: [
+      ['Golden Ginger Smoothie', ['Mango', 'Fresh ginger', 'Turmeric', 'Coconut milk']],
+      ['Berry Walnut Smoothie', ['Blackberries', 'Walnuts', 'Kefir', 'Cinnamon']],
+    ],
+    vitamins: [
+      ['Curcumin Complex', 'Vitamin'],
+      ['Omega-3 Fish Oil', 'Omega-3'],
+      ['Magnesium Glycinate', 'Mineral'],
+      ['Vitamin D3', 'Vitamin'],
+      ['Multi-Strain Probiotic', 'Probiotic'],
+    ],
+  },
+};
 
-  { dietName: 'Mediterranean', sectionName: 'foods', itemName: 'Tomato Cucumber Salad', category: 'Vegetables' },
-  { dietName: 'Mediterranean', sectionName: 'foods', itemName: 'Chickpeas', category: 'Protein' },
-  { dietName: 'Mediterranean', sectionName: 'foods', itemName: 'Sardines', category: 'Protein' },
-  { dietName: 'Mediterranean', sectionName: 'foods', itemName: 'Farro', category: 'Grains' },
-  { dietName: 'Mediterranean', sectionName: 'drinks', itemName: 'Sparkling Water', category: 'Water' },
-  { dietName: 'Mediterranean', sectionName: 'drinks', itemName: 'Mint Tea', category: 'Tea' },
-  { dietName: 'Mediterranean', sectionName: 'vitamins', itemName: 'Omega-3 Fish Oil', category: 'Omega-3' },
-  { dietName: 'Mediterranean', sectionName: 'vitamins', itemName: 'Magnesium Glycinate', category: 'Mineral' },
-
-  { dietName: 'Paleo', sectionName: 'foods', itemName: 'Eggs', category: 'Protein' },
-  { dietName: 'Paleo', sectionName: 'foods', itemName: 'Grass-Fed Beef', category: 'Protein' },
-  { dietName: 'Paleo', sectionName: 'foods', itemName: 'Sweet Potato', category: 'Side Dish' },
-  { dietName: 'Paleo', sectionName: 'foods', itemName: 'Blueberries', category: 'Fruits' },
-  { dietName: 'Paleo', sectionName: 'drinks', itemName: 'Water with Lime', category: 'Water' },
-  { dietName: 'Paleo', sectionName: 'drinks', itemName: 'Herbal Tea', category: 'Tea' },
-  { dietName: 'Paleo', sectionName: 'vitamins', itemName: 'Vitamin D3', category: 'Vitamin' },
-  { dietName: 'Paleo', sectionName: 'vitamins', itemName: 'Electrolyte Mix', category: 'Electrolyte' },
-
-  { dietName: 'Ketogenic', sectionName: 'foods', itemName: 'Avocado', category: 'Fruits' },
-  { dietName: 'Ketogenic', sectionName: 'foods', itemName: 'Spinach', category: 'Vegetables' },
-  { dietName: 'Ketogenic', sectionName: 'foods', itemName: 'Salmon', category: 'Protein' },
-  { dietName: 'Ketogenic', sectionName: 'foods', itemName: 'Cauliflower Mash', category: 'Side Dish' },
-  { dietName: 'Ketogenic', sectionName: 'drinks', itemName: 'Electrolyte Water', category: 'Water' },
-  { dietName: 'Ketogenic', sectionName: 'drinks', itemName: 'Black Coffee', category: 'Coffee' },
-  { dietName: 'Ketogenic', sectionName: 'vitamins', itemName: 'Magnesium', category: 'Mineral' },
-  { dietName: 'Ketogenic', sectionName: 'vitamins', itemName: 'Sodium / Potassium Electrolytes', category: 'Electrolyte' },
-
-  { dietName: 'Low GI', sectionName: 'foods', itemName: 'Lentils', category: 'Protein' },
-  { dietName: 'Low GI', sectionName: 'foods', itemName: 'Steel-Cut Oats', category: 'Grains' },
-  { dietName: 'Low GI', sectionName: 'foods', itemName: 'Apples', category: 'Fruits' },
-  { dietName: 'Low GI', sectionName: 'foods', itemName: 'Broccoli', category: 'Vegetables' },
-  { dietName: 'Low GI', sectionName: 'drinks', itemName: 'Water', category: 'Water' },
-  { dietName: 'Low GI', sectionName: 'drinks', itemName: 'Unsweetened Green Tea', category: 'Tea' },
-  { dietName: 'Low GI', sectionName: 'vitamins', itemName: 'Chromium', category: 'Mineral' },
-  { dietName: 'Low GI', sectionName: 'vitamins', itemName: 'Fiber Supplement', category: 'Vitamin' },
-
-  { dietName: 'ADHD', sectionName: 'foods', itemName: 'Eggs', category: 'Protein' },
-  { dietName: 'ADHD', sectionName: 'foods', itemName: 'Dark Leafy Greens', category: 'Vegetables' },
-  { dietName: 'ADHD', sectionName: 'foods', itemName: 'Greek Yogurt', category: 'Protein' },
-  { dietName: 'ADHD', sectionName: 'foods', itemName: 'Berries', category: 'Fruits' },
-  { dietName: 'ADHD', sectionName: 'drinks', itemName: 'Water', category: 'Water' },
-  { dietName: 'ADHD', sectionName: 'drinks', itemName: 'Low-Sugar Smoothie', category: 'Smoothie' },
-  { dietName: 'ADHD', sectionName: 'vitamins', itemName: 'Omega-3', category: 'Omega-3' },
-  { dietName: 'ADHD', sectionName: 'vitamins', itemName: 'Vitamin D', category: 'Vitamin' },
-
-  { dietName: 'DASH', sectionName: 'foods', itemName: 'Bananas', category: 'Fruits' },
-  { dietName: 'DASH', sectionName: 'foods', itemName: 'Low-Fat Yogurt', category: 'Protein' },
-  { dietName: 'DASH', sectionName: 'foods', itemName: 'Black Beans', category: 'Protein' },
-  { dietName: 'DASH', sectionName: 'foods', itemName: 'Brown Rice', category: 'Grains' },
-  { dietName: 'DASH', sectionName: 'drinks', itemName: 'Water', category: 'Water' },
-  { dietName: 'DASH', sectionName: 'drinks', itemName: 'Low-Fat Milk', category: 'Juice' },
-  { dietName: 'DASH', sectionName: 'vitamins', itemName: 'Potassium', category: 'Mineral' },
-  { dietName: 'DASH', sectionName: 'vitamins', itemName: 'Calcium', category: 'Mineral' },
-
-  { dietName: 'Anti-Inflammatory', sectionName: 'foods', itemName: 'Walnuts', category: 'Protein' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'foods', itemName: 'Salmon', category: 'Protein' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'foods', itemName: 'Turmeric Roasted Vegetables', category: 'Vegetables' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'foods', itemName: 'Berries', category: 'Fruits' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'drinks', itemName: 'Green Tea', category: 'Tea' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'drinks', itemName: 'Water', category: 'Water' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'vitamins', itemName: 'Omega-3', category: 'Omega-3' },
-  { dietName: 'Anti-Inflammatory', sectionName: 'vitamins', itemName: 'Curcumin', category: 'Vitamin' },
-];
+export const defaultSeedItems = Object.entries(seedPresets).flatMap(([dietName, sections]) => [
+  ...sections.foods.map(([itemName, category]) => ({
+    dietName,
+    sectionName: 'foods',
+    itemName,
+    category,
+  })),
+  ...sections.drinks.map(([itemName, category]) => ({
+    dietName,
+    sectionName: 'drinks',
+    itemName,
+    category,
+  })),
+  ...sections.smoothies.map(([itemName, ingredients]) => ({
+    dietName,
+    sectionName: 'smoothies',
+    itemName,
+    category: 'Smoothie',
+    ingredients,
+  })),
+  ...sections.vitamins.map(([itemName, category]) => ({
+    dietName,
+    sectionName: 'vitamins',
+    itemName,
+    category,
+  })),
+]);
 
 export function createEmptyCatalog(dietTypes = defaultDietTypes) {
   return dietTypes.reduce((catalog, dietType) => {
@@ -154,7 +314,7 @@ export function buildCatalog(rows, dietTypes = defaultDietTypes) {
   const catalog = createEmptyCatalog(dietTypes);
 
   for (const row of rows) {
-    if (!catalog[row.dietName] || !catalog[row.dietName][row.sectionName]) {
+    if (!catalog[row.dietName]) {
       continue;
     }
 
@@ -166,6 +326,7 @@ export function buildCatalog(rows, dietTypes = defaultDietTypes) {
       id: row.id,
       name: row.itemName,
       category: row.category,
+      ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     });
   }
 
