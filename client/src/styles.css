@@ -82,6 +82,18 @@ select {
   line-height: 1.6;
 }
 
+.profile-field small {
+  color: var(--muted);
+}
+
+.required-mark {
+  color: #bf3f3f;
+}
+
+.field-counter {
+  justify-self: end;
+}
+
 .auth-toggle-row,
 .auth-form,
 .menu-nav,
@@ -318,7 +330,7 @@ select {
 
 .footer-link {
   width: 100%;
-  text-align: left;
+  text-align: center;
 }
 
 .input-with-action {
@@ -344,6 +356,15 @@ select {
 
 .content {
   padding: 28px;
+}
+
+.page-header-card {
+  display: none;
+  margin-bottom: 24px;
+}
+
+.page-header-card h2 {
+  font-size: clamp(1.85rem, 4vw, 2.8rem);
 }
 
 .catalog-layout {
@@ -560,6 +581,7 @@ select {
 
 .section-grid,
 .profile-grid,
+.contact-layout,
 .users-grid {
   display: grid;
   gap: 24px;
@@ -571,8 +593,17 @@ select {
 }
 
 .profile-grid,
+.contact-layout,
 .users-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.contact-layout {
+  grid-template-columns: 1fr;
+}
+
+.contact-intro-card {
+  padding-bottom: 18px;
 }
 
 .catalog-card h3,
@@ -1051,6 +1082,7 @@ select {
 @media (max-width: 900px) {
   .section-grid,
   .profile-grid,
+  .contact-layout,
   .users-grid,
   .settings-columns {
     grid-template-columns: 1fr;
@@ -1209,6 +1241,16 @@ select {
     padding: 14px;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+  }
+
+  .page-header-card {
+    display: block;
+    margin-bottom: 18px;
+    padding: 18px;
+  }
+
+  .page-header-card h2 {
+    font-size: clamp(1.7rem, 8vw, 2.3rem);
   }
 
   .remove-button,

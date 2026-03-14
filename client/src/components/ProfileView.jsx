@@ -5,8 +5,6 @@ function ProfileView({ onSave, profileDraft, savingProfile, setProfileDraft, t }
   return (
     <section className="profile-grid">
       <article className="catalog-card profile-card">
-        <p className="eyebrow">{textFor(t, 'menuProfile')}</p>
-        <h2>{textFor(t, 'profileTitle')}</h2>
         <p className="profile-copy">{textFor(t, 'profileCopy')}</p>
         <div className="profile-preview">
           <div className="avatar-fallback">{avatarFallback(profileDraft)}</div>

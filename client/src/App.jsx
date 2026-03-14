@@ -98,7 +98,7 @@ function createFoodCategoryDraft() {
 }
 
 function createContactDraft() {
-  return { replyTo: '', subject: '', message: '' };
+  return { name: '', replyTo: '', subject: '', message: '' };
 }
 
 function App() {
@@ -220,10 +220,6 @@ function App() {
           username: setup.profile.username,
           isPublic: setup.profile.isPublic === true,
         });
-        setContactDraft((current) => ({
-          ...current,
-          replyTo: current.replyTo || user.email || '',
-        }));
         setCatalog(buildCatalog(ownRows, setup.dietTypes));
         setProfiles(nextProfiles);
         setIncomingShares(shareData.incomingShares);
@@ -257,6 +253,8 @@ function App() {
   }, [activeView]);
 
   const t = translations[language];
+  const activeMenuItem = menuItems.find((item) => item.id === activeView);
+  const pageBadge = activeMenuItem ? textFor(t, activeMenuItem.textKey) : textFor(t, 'appTitle');
   const sidebarTitle = textFor(t, sidebarTitleKeys[activeView] ?? 'appTitle');
 
   const publicProfiles = useMemo(() => {
@@ -1070,14 +1068,39 @@ function App() {
   function handleContactSubmit() {
     const recipient = 'x00alejandro501@gmail.com';
     const subject = contactDraft.subject.trim() || 'Diet Catalog message';
+    const name = contactDraft.name.trim();
+    const replyTo = contactDraft.replyTo.trim();
+    const messageBody = contactDraft.message.trim();
     const lines = [];
 
-    if (contactDraft.replyTo.trim()) {
-      lines.push(`Reply to: ${contactDraft.replyTo.trim()}`);
+    if (name.length > 50 || replyTo.length > 50 || subject.length > 50) {
+      setMessage(textFor(t, 'contactFieldTooLong'));
+      return;
+    }
+
+    if (replyTo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyTo)) {
+      setMessage(textFor(t, 'contactEmailInvalid'));
+      return;
+    }
+
+    if (messageBody.length < 20 || messageBody.length > 1000) {
+      setMessage(textFor(t, 'contactMessageInvalid'));
+      return;
+    }
+
+    if (name) {
+      lines.push(`Name: ${name}`);
+    }
+
+    if (replyTo) {
+      lines.push(`Reply to: ${replyTo}`);
+    }
+
+    if (name || replyTo) {
       lines.push('');
     }
 
-    lines.push(contactDraft.message.trim() || '');
+    lines.push(messageBody);
 
     const href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
       lines.join('\n')
@@ -1212,6 +1235,11 @@ function App() {
         </div>
 
         {message ? <p className="status-message status-banner">{message}</p> : null}
+
+        <section className="catalog-card page-header-card">
+          <p className="eyebrow">{pageBadge}</p>
+          <h2>{sidebarTitle}</h2>
+        </section>
 
         {activeView === 'profile' ? (
           <ProfileView

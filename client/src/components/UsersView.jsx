@@ -4,15 +4,7 @@ import { avatarFallback } from '../lib/app-helpers';
 function UsersView({ currentUserId, profiles, t }) {
   return (
     <>
-      <section className="hero-card compact-hero">
-        <p className="eyebrow">{textFor(t, 'menuUsers')}</p>
-        <div className="hero-row">
-          <div>
-            <h2>{textFor(t, 'usersTitle')}</h2>
-            <p>{textFor(t, 'usersCopy')}</p>
-          </div>
-        </div>
-      </section>
+      <section className="catalog-card empty-panel">{textFor(t, 'usersCopy')}</section>
 
       {profiles.length === 0 ? (
         <section className="catalog-card empty-panel">{textFor(t, 'usersEmpty')}</section>

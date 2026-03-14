@@ -16,8 +16,6 @@ function SharedListsView({
   return (
     <div className="shared-layout">
       <section className="catalog-card shared-sidebar">
-        <p className="eyebrow">{textFor(t, 'menuShared')}</p>
-        <h2>{textFor(t, 'sharedTitle')}</h2>
         <p className="profile-copy">{textFor(t, 'sharedCopy')}</p>
 
         {sharedEntries.length === 0 ? (
