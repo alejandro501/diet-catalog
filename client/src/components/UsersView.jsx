@@ -1,7 +1,7 @@
 import { textFor } from '../i18n';
 import { avatarFallback } from '../lib/app-helpers';
 
-function UsersView({ currentUserId, onToggleShare, profiles, sharedRecipientIds, t }) {
+function UsersView({ currentUserId, profiles, t }) {
   return (
     <>
       <section className="hero-card compact-hero">
@@ -19,7 +19,6 @@ function UsersView({ currentUserId, onToggleShare, profiles, sharedRecipientIds,
       ) : (
         <section className="users-grid">
           {profiles.map((profile) => {
-            const isShared = sharedRecipientIds.has(profile.id);
             const isSelf = profile.id === currentUserId;
 
             return (
@@ -33,13 +32,7 @@ function UsersView({ currentUserId, onToggleShare, profiles, sharedRecipientIds,
                 </div>
                 <div className="pill-row">
                   {isSelf ? <span className="pill private">You</span> : null}
-                  {isShared ? <span className="pill shared">{textFor(t, 'sharedByYou')}</span> : null}
                 </div>
-                {!isSelf ? (
-                  <button type="button" className="secondary-button" onClick={() => onToggleShare(profile)}>
-                    {isShared ? textFor(t, 'unshareWithUser') : textFor(t, 'shareWithUser')}
-                  </button>
-                ) : null}
               </article>
             );
           })}

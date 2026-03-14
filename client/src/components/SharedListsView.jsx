@@ -1,17 +1,16 @@
-import { defaultDietTypes } from '../catalog';
 import { textFor } from '../i18n';
-import { buildSharedDietTypes } from '../lib/firestore-data';
 import CatalogView from './CatalogView';
 
 function SharedListsView({
   activeDiet,
+  dietTypes,
   language,
   loading,
-  onSelectProfile,
-  selectedProfile,
+  onSelectShare,
+  selectedShare,
   setActiveDiet,
   sharedCatalog,
-  sharedProfiles,
+  sharedEntries,
   t,
 }) {
   return (
@@ -21,19 +20,19 @@ function SharedListsView({
         <h2>{textFor(t, 'sharedTitle')}</h2>
         <p className="profile-copy">{textFor(t, 'sharedCopy')}</p>
 
-        {sharedProfiles.length === 0 ? (
+        {sharedEntries.length === 0 ? (
           <div className="empty-state">{textFor(t, 'sharedEmpty')}</div>
         ) : (
           <div className="shared-list">
-            {sharedProfiles.map((profile) => (
+            {sharedEntries.map((entry) => (
               <button
-                key={profile.id}
+                key={entry.id}
                 type="button"
-                className={selectedProfile?.id === profile.id ? 'shared-link active' : 'shared-link'}
-                onClick={() => onSelectProfile(profile)}
+                className={selectedShare?.id === entry.id ? 'shared-link active' : 'shared-link'}
+                onClick={() => onSelectShare(entry)}
               >
-                <span>{profile.name || textFor(t, 'anonymousUser')}</span>
-                <small>@{profile.username || 'username'}</small>
+                <span>{entry.ownerName || entry.ownerUsername || textFor(t, 'anonymousUser')}</span>
+                <small>{entry.dietLabel}</small>
               </button>
             ))}
           </div>
@@ -41,7 +40,7 @@ function SharedListsView({
       </section>
 
       <div className="shared-content">
-        {!selectedProfile ? (
+        {!selectedShare ? (
           <section className="catalog-card empty-panel">{textFor(t, 'sharedSelectPrompt')}</section>
         ) : loading ? (
           <section className="catalog-card empty-panel">{textFor(t, 'sharedLoading')}</section>
@@ -49,7 +48,7 @@ function SharedListsView({
           <CatalogView
             activeDiet={activeDiet}
             catalog={sharedCatalog}
-            dietTypes={buildSharedDietTypes(sharedCatalog)}
+            dietTypes={dietTypes}
             drafts={{
               foods: { name: '', category: 'Fruits' },
               drinks: { name: '', category: 'Water' },
@@ -68,6 +67,8 @@ function SharedListsView({
             handleRemoveSmoothieIngredient={() => {}}
             language={language}
             readOnly
+            shareCandidates={[]}
+            sharedRecipients={[]}
             setActiveDiet={setActiveDiet}
             setFilters={() => {}}
             t={t}

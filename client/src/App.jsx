@@ -38,9 +38,11 @@ import {
   ensureUserSetup,
   loadCatalogRows,
   loadProfiles,
+  loadSharedDietItems,
   loadSharesSafely,
   profileDocRef,
-  shareDocRef,
+  sharedDietDocRef,
+  sharedDietItemDocRef,
   userDocRef,
 } from './lib/firestore-data';
 import {
@@ -106,13 +108,15 @@ function App() {
   const [message, setMessage] = useState('');
   const [authMode, setAuthMode] = useState('sign-in');
   const [authValues, setAuthValues] = useState({ email: '', password: '', confirmPassword: '' });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState(null);
-  const [profileDraft, setProfileDraft] = useState({ name: '', username: '' });
+  const [profileDraft, setProfileDraft] = useState({ name: '', username: '', isPublic: false });
   const [profiles, setProfiles] = useState([]);
   const [incomingShares, setIncomingShares] = useState([]);
   const [outgoingShares, setOutgoingShares] = useState([]);
-  const [selectedSharedProfile, setSelectedSharedProfile] = useState(null);
+  const [selectedSharedEntry, setSelectedSharedEntry] = useState(null);
   const [sharedCatalog, setSharedCatalog] = useState(createEmptyCatalog(defaultDietTypes));
+  const [sharedDietTypes, setSharedDietTypes] = useState(defaultDietTypes);
 
   useEffect(() => {
     if (!hasFirebaseEnv) {
@@ -161,8 +165,9 @@ function App() {
       setProfiles([]);
       setIncomingShares([]);
       setOutgoingShares([]);
-      setSelectedSharedProfile(null);
+      setSelectedSharedEntry(null);
       setSharedCatalog(createEmptyCatalog(defaultDietTypes));
+      setSharedDietTypes(defaultDietTypes);
       return;
     }
 
@@ -191,7 +196,11 @@ function App() {
         setFoodCategoryDrafts(createCategoryDrafts(setup.foodCategories));
         setActiveDiet(setup.dietTypes.find((dietType) => dietType.visible)?.name ?? setup.dietTypes[0].name);
         setProfile(setup.profile);
-        setProfileDraft({ name: setup.profile.name, username: setup.profile.username });
+        setProfileDraft({
+          name: setup.profile.name,
+          username: setup.profile.username,
+          isPublic: setup.profile.isPublic === true,
+        });
         setCatalog(buildCatalog(ownRows, setup.dietTypes));
         setProfiles(nextProfiles);
         setIncomingShares(shareData.incomingShares);
@@ -220,18 +229,65 @@ function App() {
     }
   }, [language]);
 
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [activeView]);
+
   const t = translations[language];
 
-  const sharedProfiles = useMemo(() => {
-    const ownerIds = new Set(incomingShares.map((entry) => entry.ownerId));
-    return profiles.filter((profileEntry) => ownerIds.has(profileEntry.id));
-  }, [incomingShares, profiles]);
+  const publicProfiles = useMemo(() => {
+    return profiles.filter((profileEntry) => profileEntry.isPublic);
+  }, [profiles]);
 
-  const outgoingRecipientIds = useMemo(() => {
-    return new Set(outgoingShares.map((entry) => entry.recipientId));
-  }, [outgoingShares]);
+  const shareableProfiles = useMemo(() => {
+    return profiles.filter((profileEntry) => profileEntry.isPublic && profileEntry.id !== user?.uid);
+  }, [profiles, user?.uid]);
 
-  async function refreshAppData(nextSelectedId = selectedSharedProfile?.id ?? null) {
+  const profileMap = useMemo(() => {
+    return new Map(profiles.map((profileEntry) => [profileEntry.id, profileEntry]));
+  }, [profiles]);
+
+  const sharedEntries = useMemo(() => {
+    return incomingShares.map((entry) => {
+      const ownerProfile = profileMap.get(entry.ownerId);
+      const dietMatch = defaultDietTypes.find((dietType) => dietType.id === entry.dietId);
+
+      return {
+        ...entry,
+        ownerName: ownerProfile?.name ?? '',
+        ownerUsername: ownerProfile?.username ?? '',
+        dietLabel:
+          entry.dietNames?.[language]?.trim() ||
+          entry.dietNames?.en?.trim() ||
+          dietMatch?.names?.[language] ||
+          entry.dietName,
+      };
+    });
+  }, [incomingShares, language, profileMap]);
+
+  const activeDietMeta = useMemo(() => {
+    return dietTypes.find((dietType) => dietType.name === activeDiet) ?? dietTypes[0];
+  }, [activeDiet, dietTypes]);
+
+  const activeDietShare = useMemo(() => {
+    if (!activeDietMeta) {
+      return null;
+    }
+
+    return outgoingShares.find((entry) => entry.dietId === activeDietMeta.id) ?? null;
+  }, [activeDietMeta, outgoingShares]);
+
+  const activeDietRecipients = useMemo(() => {
+    if (!activeDietShare) {
+      return [];
+    }
+
+    return activeDietShare.recipientIds
+      .map((recipientId) => profileMap.get(recipientId))
+      .filter(Boolean);
+  }, [activeDietShare, profileMap]);
+
+  async function refreshAppData(nextSelectedId = selectedSharedEntry?.id ?? null) {
     if (!user) {
       return;
     }
@@ -258,8 +314,8 @@ function App() {
       return;
     }
 
-    const matched = nextProfiles.find((profileEntry) => profileEntry.id === nextSelectedId) ?? null;
-    setSelectedSharedProfile(matched);
+    const matched = shareData.incomingShares.find((entry) => entry.id === nextSelectedId) ?? null;
+    setSelectedSharedEntry(matched);
   }
 
   async function changeLanguage(nextLanguage) {
@@ -293,6 +349,70 @@ function App() {
     }));
   }
 
+  async function syncSharedDietDocument(dietMeta, nextShareState) {
+    if (!user || !dietMeta) {
+      return;
+    }
+
+    const shareRef = sharedDietDocRef(user.uid, dietMeta.id);
+    const shouldExist = nextShareState.isGlobal || nextShareState.recipientIds.length > 0;
+
+    if (!shouldExist) {
+      const snapshot = await getDocs(collection(db, 'sharedDiets', `${user.uid}_${dietMeta.id}`, 'items'));
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((entry) => batch.delete(entry.ref));
+      batch.delete(shareRef);
+      await batch.commit();
+      return;
+    }
+
+    const itemsForDiet = Object.entries(catalog[dietMeta.name] ?? {}).flatMap(([sectionName, items]) =>
+      items.map((item) => ({
+        id: item.id,
+        dietName: dietMeta.name,
+        sectionName,
+        itemName: item.name,
+        category: item.category,
+        ingredients: Array.isArray(item.ingredients) ? item.ingredients : [],
+      }))
+    );
+
+    const batch = writeBatch(db);
+    batch.set(
+      shareRef,
+      {
+        ownerId: user.uid,
+        dietId: dietMeta.id,
+        dietName: dietMeta.name,
+        dietNames: dietMeta.names ?? { en: dietMeta.name, hu: '', es: '', it: '' },
+        dietDescriptions: dietMeta.descriptions ?? { en: '', hu: '', es: '', it: '' },
+        isGlobal: nextShareState.isGlobal,
+        recipientIds: nextShareState.recipientIds,
+        updatedAt: serverTimestamp(),
+        createdAt: nextShareState.createdAt ?? serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const existingSharedItems = await getDocs(collection(db, 'sharedDiets', `${user.uid}_${dietMeta.id}`, 'items'));
+    const itemIds = new Set(itemsForDiet.map((item) => item.id));
+    existingSharedItems.docs.forEach((entry) => {
+      if (!itemIds.has(entry.id)) {
+        batch.delete(entry.ref);
+      }
+    });
+
+    itemsForDiet.forEach((item) => {
+      batch.set(sharedDietItemDocRef(user.uid, dietMeta.id, item.id), {
+        ...item,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+  }
+
   async function handleAuthSubmit(event) {
     event.preventDefault();
     setIsSubmitting(true);
@@ -321,13 +441,14 @@ function App() {
     const name = drafts[section].name.trim();
     const category = drafts[section].category;
 
-    if (!name || !user) {
+    if (!name || !user || !activeDietMeta) {
       return;
     }
 
     try {
       const itemRef = await addDoc(catalogCollectionRef(user.uid), {
         dietName: activeDiet,
+        dietId: activeDietMeta.id,
         sectionName: section,
         itemName: name,
         category,
@@ -350,6 +471,23 @@ function App() {
           name: '',
         },
       }));
+
+      if (activeDietShare) {
+        await setDoc(
+          sharedDietItemDocRef(user.uid, activeDietMeta.id, itemRef.id),
+          {
+            dietName: activeDiet,
+            dietId: activeDietMeta.id,
+            sectionName: section,
+            itemName: name,
+            category,
+            ingredients: [],
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
     }
@@ -362,6 +500,9 @@ function App() {
 
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'catalogItems', id));
+      if (activeDietMeta && activeDietShare) {
+        await deleteDoc(sharedDietItemDocRef(user.uid, activeDietMeta.id, id));
+      }
       setCatalog((current) => ({
         ...current,
         [activeDiet]: {
@@ -375,7 +516,7 @@ function App() {
   }
 
   async function handleAddSmoothie({ name, ingredients }) {
-    if (!user || !name) {
+    if (!user || !name || !activeDietMeta) {
       return;
     }
 
@@ -383,6 +524,7 @@ function App() {
       const cleanedIngredients = [...new Set(ingredients.map((ingredient) => ingredient.trim()).filter(Boolean))];
       const itemRef = await addDoc(catalogCollectionRef(user.uid), {
         dietName: activeDiet,
+        dietId: activeDietMeta.id,
         sectionName: 'smoothies',
         itemName: name,
         category: 'Smoothie',
@@ -401,6 +543,23 @@ function App() {
           ],
         },
       }));
+
+      if (activeDietShare) {
+        await setDoc(
+          sharedDietItemDocRef(user.uid, activeDietMeta.id, itemRef.id),
+          {
+            dietName: activeDiet,
+            dietId: activeDietMeta.id,
+            sectionName: 'smoothies',
+            itemName: name,
+            category: 'Smoothie',
+            ingredients: cleanedIngredients,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
     }
@@ -428,6 +587,22 @@ function App() {
         ingredients: nextIngredients,
         updatedAt: serverTimestamp(),
       });
+
+      if (activeDietMeta && activeDietShare) {
+        await setDoc(
+          sharedDietItemDocRef(user.uid, activeDietMeta.id, smoothieId),
+          {
+            dietName: activeDiet,
+            dietId: activeDietMeta.id,
+            sectionName: 'smoothies',
+            itemName: smoothie.name,
+            category: smoothie.category,
+            ingredients: nextIngredients,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
 
       setCatalog((current) => ({
         ...current,
@@ -461,6 +636,22 @@ function App() {
         updatedAt: serverTimestamp(),
       });
 
+      if (activeDietMeta && activeDietShare) {
+        await setDoc(
+          sharedDietItemDocRef(user.uid, activeDietMeta.id, smoothieId),
+          {
+            dietName: activeDiet,
+            dietId: activeDietMeta.id,
+            sectionName: 'smoothies',
+            itemName: smoothie.name,
+            category: smoothie.category,
+            ingredients: nextIngredients,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
       setCatalog((current) => ({
         ...current,
         [activeDiet]: {
@@ -487,6 +678,7 @@ function App() {
     const name = profileDraft.name.trim();
     const username = profileDraft.username.trim();
     const normalizedUsername = normalizeUsername(username);
+    const isPublic = profileDraft.isPublic === true;
 
     if (!name) {
       setMessage(textFor(t, 'profileNameRequired'));
@@ -520,12 +712,13 @@ function App() {
         name,
         username,
         normalizedUsername,
+        isPublic,
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(profileDocRef(user.uid), payload, { merge: true });
       setProfile({ id: user.uid, ...payload });
-      await refreshAppData(selectedSharedProfile?.id ?? null);
+      await refreshAppData(selectedSharedEntry?.id ?? null);
       setMessage(textFor(t, 'profileSaved'));
     } catch (error) {
       console.error('Profile save failed', error);
@@ -535,44 +728,90 @@ function App() {
     }
   }
 
-  async function handleToggleShare(recipientProfile) {
-    if (!user) {
+  async function handleToggleDietGlobalShare(nextIsGlobal) {
+    if (!user || !activeDietMeta) {
       return;
     }
 
-    const ref = shareDocRef(user.uid, recipientProfile.id);
-    const alreadyShared = outgoingRecipientIds.has(recipientProfile.id);
-
     try {
-      if (alreadyShared) {
-        await deleteDoc(ref);
-        setMessage(textFor(t, 'shareRemoved'));
-      } else {
-        await setDoc(ref, {
-          ownerId: user.uid,
-          recipientId: recipientProfile.id,
-          createdAt: serverTimestamp(),
-        });
-        setMessage(textFor(t, 'shareCreated'));
-      }
+      const nextShareState = {
+        ...(activeDietShare ?? {}),
+        ownerId: user.uid,
+        dietId: activeDietMeta.id,
+        dietName: activeDietMeta.name,
+        recipientIds: activeDietShare?.recipientIds ?? [],
+        isGlobal: nextIsGlobal,
+      };
 
-      await refreshAppData(selectedSharedProfile?.id ?? null);
+      await syncSharedDietDocument(activeDietMeta, nextShareState);
+      await refreshAppData(selectedSharedEntry?.id ?? null);
+      setMessage(nextIsGlobal ? textFor(t, 'dietShareGlobalEnabled') : textFor(t, 'dietShareGlobalDisabled'));
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
     }
   }
 
-  async function handleOpenShared(profileEntry) {
+  async function handleAddDietShareRecipient(recipientProfile) {
+    if (!user || !activeDietMeta) {
+      return;
+    }
+
+    const nextRecipientIds = [...new Set([...(activeDietShare?.recipientIds ?? []), recipientProfile.id])];
+
+    try {
+      await syncSharedDietDocument(activeDietMeta, {
+        ...(activeDietShare ?? {}),
+        ownerId: user.uid,
+        dietId: activeDietMeta.id,
+        dietName: activeDietMeta.name,
+        recipientIds: nextRecipientIds,
+        isGlobal: activeDietShare?.isGlobal === true,
+      });
+      await refreshAppData(selectedSharedEntry?.id ?? null);
+      setMessage(textFor(t, 'dietShareRecipientAdded'));
+    } catch (error) {
+      setMessage(formatFirebaseError(error, t));
+    }
+  }
+
+  async function handleRemoveDietShareRecipient(recipientId) {
+    if (!user || !activeDietMeta || !activeDietShare) {
+      return;
+    }
+
+    const nextRecipientIds = activeDietShare.recipientIds.filter((entry) => entry !== recipientId);
+
+    try {
+      await syncSharedDietDocument(activeDietMeta, {
+        ...activeDietShare,
+        recipientIds: nextRecipientIds,
+      });
+      await refreshAppData(selectedSharedEntry?.id ?? null);
+      setMessage(textFor(t, 'dietShareRecipientRemoved'));
+    } catch (error) {
+      setMessage(formatFirebaseError(error, t));
+    }
+  }
+
+  async function handleOpenShared(sharedEntry) {
     setActiveView('shared');
-    setSelectedSharedProfile(profileEntry);
-    setSharedActiveDiet(Object.keys(sharedCatalog)[0] ?? defaultDietTypes[0].name);
+    setSelectedSharedEntry(sharedEntry);
     setSharedLoading(true);
 
     try {
-      const rows = await loadCatalogRows(profileEntry.id);
-      const sharedDietTypes = dietTypes.map((dietType) => ({ ...dietType, visible: true }));
-      setSharedCatalog(buildCatalog(rows, sharedDietTypes));
-      setSharedActiveDiet(sharedDietTypes[0]?.name ?? defaultDietTypes[0].name);
+      const rows = await loadSharedDietItems(sharedEntry.ownerId, sharedEntry.dietId);
+      const nextSharedDietTypes = [
+        {
+          id: sharedEntry.dietId,
+          name: sharedEntry.dietName,
+          names: sharedEntry.dietNames ?? { en: sharedEntry.dietName, hu: '', es: '', it: '' },
+          descriptions: sharedEntry.dietDescriptions ?? { en: '', hu: '', es: '', it: '' },
+          visible: true,
+        },
+      ];
+      setSharedDietTypes(nextSharedDietTypes);
+      setSharedCatalog(buildCatalog(rows, nextSharedDietTypes));
+      setSharedActiveDiet(nextSharedDietTypes[0]?.name ?? defaultDietTypes[0].name);
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
     } finally {
@@ -759,7 +998,7 @@ function App() {
         await batch.commit();
       }
 
-      await refreshAppData(selectedSharedProfile?.id ?? null);
+      await refreshAppData(selectedSharedEntry?.id ?? null);
       setMessage(textFor(t, 'settingsSaved'));
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
@@ -803,7 +1042,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className={mobileMenuOpen ? 'sidebar mobile-open' : 'sidebar'}>
         <div>
           <div className="sidebar-topbar">
             <div>
@@ -818,7 +1057,10 @@ function App() {
                 key={item.id}
                 type="button"
                 className={activeView === item.id ? 'menu-link active' : 'menu-link'}
-                onClick={() => setActiveView(item.id)}
+                onClick={() => {
+                  setActiveView(item.id);
+                  setMobileMenuOpen(false);
+                }}
               >
                 {textFor(t, item.textKey)}
               </button>
@@ -834,14 +1076,36 @@ function App() {
               <small>@{profile?.username || 'username'}</small>
             </div>
           </div>
+          <label className="language-control sidebar-language">
+            <span>{textFor(t, 'language')}</span>
+            <select value={language} onChange={(event) => changeLanguage(event.target.value)}>
+              {languageOptions.map((option) => (
+                <option key={option} value={option}>
+                  {t.languages?.[option] ?? translations.en.languages[option]}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="button" className="signout-button" onClick={() => signOut(auth)}>
             {textFor(t, 'signOut')}
           </button>
         </div>
       </aside>
 
+      {mobileMenuOpen ? <button type="button" className="mobile-backdrop" onClick={() => setMobileMenuOpen(false)} /> : null}
+
       <main className="content">
         <div className="topbar">
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen((current) => !current)}
+          >
+            <span className="mobile-menu-icon" aria-hidden="true">
+              |||
+            </span>
+            <span>{textFor(t, 'mobileMenu')}</span>
+          </button>
           <label className="language-control topbar-language">
             <span>{textFor(t, 'language')}</span>
             <select value={language} onChange={(event) => changeLanguage(event.target.value)}>
@@ -875,13 +1139,21 @@ function App() {
             filters={filters}
             foodCategories={foodCategories}
             handleAddItem={handleAddItem}
+            handleAddDietShareRecipient={handleAddDietShareRecipient}
             handleAddSmoothie={handleAddSmoothie}
             handleAddSmoothieIngredient={handleAddSmoothieIngredient}
             handleDraftChange={handleDraftChange}
+            handleRemoveDietShareRecipient={handleRemoveDietShareRecipient}
             handleRemoveItem={handleRemoveItem}
             handleRemoveSmoothie={handleRemoveSmoothie}
             handleRemoveSmoothieIngredient={handleRemoveSmoothieIngredient}
+            handleToggleDietGlobalShare={handleToggleDietGlobalShare}
             language={language}
+            shareCandidates={shareableProfiles.filter(
+              (profileEntry) => !activeDietShare?.recipientIds?.includes(profileEntry.id)
+            )}
+            sharedGlobally={activeDietShare?.isGlobal === true}
+            sharedRecipients={activeDietRecipients}
             setActiveDiet={setActiveDiet}
             setFilters={setFilters}
             t={t}
@@ -891,9 +1163,7 @@ function App() {
         {activeView === 'users' ? (
           <UsersView
             currentUserId={user.uid}
-            onToggleShare={handleToggleShare}
-            profiles={profiles}
-            sharedRecipientIds={outgoingRecipientIds}
+            profiles={publicProfiles}
             t={t}
           />
         ) : null}
@@ -901,13 +1171,14 @@ function App() {
         {activeView === 'shared' ? (
           <SharedListsView
             activeDiet={sharedActiveDiet}
+            dietTypes={sharedDietTypes}
             language={language}
             loading={sharedLoading}
-            onSelectProfile={handleOpenShared}
-            selectedProfile={selectedSharedProfile}
+            onSelectShare={handleOpenShared}
+            selectedShare={selectedSharedEntry}
             setActiveDiet={setSharedActiveDiet}
             sharedCatalog={sharedCatalog}
-            sharedProfiles={sharedProfiles}
+            sharedEntries={sharedEntries}
             t={t}
           />
         ) : null}

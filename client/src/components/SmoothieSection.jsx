@@ -57,26 +57,32 @@ function SmoothieSection({
 
       {!readOnly ? (
         <div className="smoothie-form smoothie-builder">
-          <input
-            type="text"
-            value={draftName}
-            placeholder={textFor(t, 'smoothieNamePlaceholder')}
-            onChange={(event) => setDraftName(event.target.value)}
-          />
-
-          <div className="smoothie-inline-form">
+          <label className="profile-field">
+            <span>{textFor(t, 'smoothieNameLabel')}</span>
             <input
               type="text"
-              value={draftIngredient}
-              placeholder={textFor(t, 'smoothieIngredientPlaceholder')}
-              onChange={(event) => setDraftIngredient(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  handleQueueIngredient();
-                }
-              }}
+              value={draftName}
+              placeholder={textFor(t, 'smoothieNamePlaceholder')}
+              onChange={(event) => setDraftName(event.target.value)}
             />
-            <button type="button" onClick={handleQueueIngredient}>
+          </label>
+
+          <div className="smoothie-ingredient-builder">
+            <label className="profile-field">
+              <span>{textFor(t, 'smoothieIngredients')}</span>
+              <input
+                type="text"
+                value={draftIngredient}
+                placeholder={textFor(t, 'smoothieIngredientPlaceholder')}
+                onChange={(event) => setDraftIngredient(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleQueueIngredient();
+                  }
+                }}
+              />
+            </label>
+            <button type="button" className="secondary-button" onClick={handleQueueIngredient}>
               {textFor(t, 'smoothieAddIngredient')}
             </button>
           </div>
@@ -97,7 +103,7 @@ function SmoothieSection({
           ) : null}
 
           <div className="form-actions">
-            <button type="button" className="primary-button save-button" onClick={handleSaveSmoothie}>
+            <button type="button" className="primary-button" onClick={handleSaveSmoothie}>
               {textFor(t, 'smoothieSave')}
             </button>
           </div>
@@ -164,7 +170,7 @@ function SmoothieSection({
                     )}
 
                     {!readOnly ? (
-                      <div className="smoothie-inline-form">
+                      <div className="smoothie-inline-form compact-ingredient-form">
                         <input
                           type="text"
                           placeholder={textFor(t, 'smoothieIngredientPlaceholder')}
@@ -177,6 +183,7 @@ function SmoothieSection({
                         />
                         <button
                           type="button"
+                          className="secondary-button"
                           onClick={(event) => {
                             const input = event.currentTarget.previousElementSibling;
                             onAddIngredient(smoothie.id, input.value);

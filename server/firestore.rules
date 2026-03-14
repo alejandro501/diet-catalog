@@ -2,15 +2,20 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function canReadSharedDiet(resourceData) {
+      return request.auth != null
+        && (
+          resourceData.ownerId == request.auth.uid
+          || resourceData.isGlobal == true
+          || request.auth.uid in resourceData.recipientIds
+        );
+    }
+
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
 
       match /catalogItems/{itemId} {
-        allow read: if request.auth != null
-          && (
-            request.auth.uid == userId
-            || exists(/databases/$(database)/documents/shares/$(userId + "_" + request.auth.uid))
-          );
+        allow read: if request.auth != null && request.auth.uid == userId;
         allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
@@ -20,16 +25,18 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /shares/{shareId} {
-      allow read: if request.auth != null
-        && (
-          resource.data.ownerId == request.auth.uid
-          || resource.data.recipientId == request.auth.uid
-        );
+    match /sharedDiets/{shareId} {
+      allow read: if canReadSharedDiet(resource.data);
       allow create, update: if request.auth != null
         && request.resource.data.ownerId == request.auth.uid;
       allow delete: if request.auth != null
         && resource.data.ownerId == request.auth.uid;
+
+      match /items/{itemId} {
+        allow read: if canReadSharedDiet(get(/databases/$(database)/documents/sharedDiets/$(shareId)).data);
+        allow write: if request.auth != null
+          && get(/databases/$(database)/documents/sharedDiets/$(shareId)).data.ownerId == request.auth.uid;
+      }
     }
 
     match /{document=**} {

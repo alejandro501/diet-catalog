@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  deleteDoc,
   getDoc,
   getDocs,
   orderBy,
@@ -30,8 +29,16 @@ export function profileDocRef(userId) {
   return doc(db, 'profiles', userId);
 }
 
-export function shareDocRef(ownerId, recipientId) {
-  return doc(db, 'shares', `${ownerId}_${recipientId}`);
+export function sharedDietDocRef(ownerId, dietId) {
+  return doc(db, 'sharedDiets', `${ownerId}_${dietId}`);
+}
+
+export function sharedDietItemsCollectionRef(ownerId, dietId) {
+  return collection(db, 'sharedDiets', `${ownerId}_${dietId}`, 'items');
+}
+
+export function sharedDietItemDocRef(ownerId, dietId, itemId) {
+  return doc(db, 'sharedDiets', `${ownerId}_${dietId}`, 'items', itemId);
 }
 
 export function catalogCollectionRef(userId) {
@@ -82,6 +89,7 @@ export async function ensureUserSetup(user) {
         name: defaultName,
         username: defaultUsername,
         normalizedUsername: defaultUsername,
+        isPublic: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       },
@@ -154,12 +162,21 @@ export async function loadProfiles() {
 }
 
 export async function loadIncomingShares(userId) {
-  const snapshot = await getDocs(query(collection(db, 'shares'), where('recipientId', '==', userId)));
-  return snapshot.docs.map(mapShareDoc);
+  const directSnapshot = await getDocs(
+    query(collection(db, 'sharedDiets'), where('recipientIds', 'array-contains', userId))
+  );
+  const globalSnapshot = await getDocs(query(collection(db, 'sharedDiets'), where('isGlobal', '==', true)));
+  const deduped = new Map();
+
+  [...directSnapshot.docs, ...globalSnapshot.docs].forEach((entry) => {
+    deduped.set(entry.id, mapShareDoc(entry));
+  });
+
+  return [...deduped.values()].filter((entry) => entry.ownerId !== userId);
 }
 
 export async function loadOutgoingShares(userId) {
-  const snapshot = await getDocs(query(collection(db, 'shares'), where('ownerId', '==', userId)));
+  const snapshot = await getDocs(query(collection(db, 'sharedDiets'), where('ownerId', '==', userId)));
   return snapshot.docs.map(mapShareDoc);
 }
 
@@ -173,6 +190,11 @@ export async function loadSharesSafely(userId) {
     incomingShares: incomingResult.status === 'fulfilled' ? incomingResult.value : [],
     outgoingShares: outgoingResult.status === 'fulfilled' ? outgoingResult.value : [],
   };
+}
+
+export async function loadSharedDietItems(ownerId, dietId) {
+  const snapshot = await getDocs(query(sharedDietItemsCollectionRef(ownerId, dietId), orderBy('createdAt', 'desc')));
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
 }
 
 export function buildSharedDietTypes(catalog) {

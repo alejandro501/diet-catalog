@@ -69,11 +69,17 @@ export function mapProfileDoc(snapshot) {
     name: data.name ?? '',
     username: data.username ?? '',
     normalizedUsername: data.normalizedUsername ?? '',
+    isPublic: data.isPublic === true,
   };
 }
 
 export function mapShareDoc(snapshot) {
-  return snapshot.data();
+  return {
+    id: snapshot.id,
+    ...snapshot.data(),
+    recipientIds: Array.isArray(snapshot.data()?.recipientIds) ? snapshot.data().recipientIds : [],
+    isGlobal: snapshot.data()?.isGlobal === true,
+  };
 }
 
 export function sortProfiles(profiles) {

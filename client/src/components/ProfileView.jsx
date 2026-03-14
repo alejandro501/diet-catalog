@@ -40,6 +40,20 @@ function ProfileView({ onSave, profileDraft, savingProfile, setProfileDraft, t }
               }
             />
           </label>
+
+          <label className="share-toggle field-span">
+            <input
+              type="checkbox"
+              checked={profileDraft.isPublic === true}
+              onChange={(event) =>
+                setProfileDraft((current) => ({ ...current, isPublic: event.target.checked }))
+              }
+            />
+            <div>
+              <strong>{textFor(t, 'profilePublicLabel')}</strong>
+              <span>{textFor(t, 'profilePublicHelp')}</span>
+            </div>
+          </label>
         </div>
 
         <div className="form-actions">

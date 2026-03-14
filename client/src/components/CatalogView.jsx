@@ -12,6 +12,9 @@ function CatalogView({
   filters,
   foodCategories,
   handleAddItem,
+  handleAddDietShareRecipient,
+  handleRemoveDietShareRecipient,
+  handleToggleDietGlobalShare,
   handleDraftChange,
   handleRemoveItem,
   handleAddSmoothie,
@@ -20,6 +23,9 @@ function CatalogView({
   handleRemoveSmoothieIngredient,
   language,
   readOnly = false,
+  shareCandidates = [],
+  sharedGlobally = false,
+  sharedRecipients = [],
   setActiveDiet,
   setFilters,
   t,
@@ -29,6 +35,7 @@ function CatalogView({
   const activeDietMeta = dietTypes.find((dietType) => dietType.name === activeDiet);
   const activeFoodOptions = ['All', ...foodCategories];
   const [expandedSections, setExpandedSections] = useState({});
+  const [shareSearch, setShareSearch] = useState('');
 
   const filteredSections = useMemo(() => {
     return sectionNames.filter((section) => section !== 'smoothies').reduce((acc, section) => {
@@ -39,10 +46,36 @@ function CatalogView({
     }, {});
   }, [activeCatalog, filters]);
 
+  const filteredShareCandidates = useMemo(() => {
+    const query = shareSearch.trim().toLowerCase();
+
+    if (!query) {
+      return shareCandidates.slice(0, 6);
+    }
+
+    return shareCandidates
+      .filter((profile) => {
+        const name = profile.name?.toLowerCase() ?? '';
+        const username = profile.username?.toLowerCase() ?? '';
+        return name.includes(query) || username.includes(query);
+      })
+      .slice(0, 6);
+  }, [shareCandidates, shareSearch]);
+
   return (
     <section className="catalog-layout">
       <article className="catalog-card diet-selector-panel">
         <p className="eyebrow">{textFor(t, 'dietNavigation')}</p>
+        <label className="profile-field mobile-diet-select">
+          <span>{textFor(t, 'mobileDietSelect')}</span>
+          <select value={activeDiet} onChange={(event) => setActiveDiet(event.target.value)}>
+            {visibleDietTypes.map((dietType) => (
+              <option key={dietType.id} value={dietType.name}>
+                {localizedDietName(dietType, language)}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="diet-selector-list">
           {visibleDietTypes.map((dietType) => (
             <button
@@ -99,6 +132,72 @@ function CatalogView({
               </div>
             </div>
           </div>
+
+          {!readOnly ? (
+            <div className="diet-share-panel">
+              <div className="diet-share-controls">
+                <label className="share-toggle compact-share-toggle">
+                  <input
+                    type="checkbox"
+                    checked={sharedGlobally}
+                    onChange={(event) => handleToggleDietGlobalShare(event.target.checked)}
+                  />
+                  <div>
+                    <strong>{textFor(t, 'dietShareGlobalLabel')}</strong>
+                    <span>{textFor(t, 'dietShareGlobalHelp')}</span>
+                  </div>
+                </label>
+
+                <div className="diet-share-search">
+                  <label className="profile-field">
+                    <span>{textFor(t, 'dietShareSpecificLabel')}</span>
+                    <input
+                      type="text"
+                      value={shareSearch}
+                      placeholder={textFor(t, 'dietShareSearchPlaceholder')}
+                      onChange={(event) => setShareSearch(event.target.value)}
+                    />
+                  </label>
+
+                  {filteredShareCandidates.length > 0 ? (
+                    <div className="share-search-results">
+                      {filteredShareCandidates.map((profile) => (
+                        <button
+                          key={profile.id}
+                          type="button"
+                          className="share-search-result"
+                          onClick={() => {
+                            handleAddDietShareRecipient(profile);
+                            setShareSearch('');
+                          }}
+                        >
+                          <strong>{profile.name || profile.username || textFor(t, 'anonymousUser')}</strong>
+                          <small>@{profile.username || 'username'}</small>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="pill-row share-badge-row">
+                {sharedRecipients.length === 0 ? (
+                  <span className="pill private">{textFor(t, 'dietShareNoSpecificUsers')}</span>
+                ) : (
+                  sharedRecipients.map((profile) => (
+                    <button
+                      key={profile.id}
+                      type="button"
+                      className="pill share-recipient-pill"
+                      onClick={() => handleRemoveDietShareRecipient(profile.id)}
+                    >
+                      {profile.name || (profile.username ? `@${profile.username}` : textFor(t, 'anonymousUser'))}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="section-grid">
