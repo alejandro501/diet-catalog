@@ -123,11 +123,37 @@ export const defaultDietTypes = [
 ];
 
 export const sectionNames = ['foods', 'drinks', 'smoothies', 'spices', 'vitamins'];
-export const defaultFoodCategories = ['Fruits', 'Vegetables', 'Side Dish', 'Protein', 'Grains'];
+export const defaultFoodCategories = [
+  {
+    id: 'fruits',
+    name: 'Fruits',
+    names: { en: 'Fruits', hu: 'Gyümölcsök', es: 'Frutas', it: 'Frutta' },
+  },
+  {
+    id: 'vegetables',
+    name: 'Vegetables',
+    names: { en: 'Vegetables', hu: 'Zöldségek', es: 'Verduras', it: 'Verdure' },
+  },
+  {
+    id: 'side-dish',
+    name: 'Side Dish',
+    names: { en: 'Side Dish', hu: 'Köret', es: 'Guarnición', it: 'Contorno' },
+  },
+  {
+    id: 'protein',
+    name: 'Protein',
+    names: { en: 'Protein', hu: 'Fehérje', es: 'Proteína', it: 'Proteine' },
+  },
+  {
+    id: 'grains',
+    name: 'Grains',
+    names: { en: 'Grains', hu: 'Gabonafélék', es: 'Cereales', it: 'Cereali' },
+  },
+];
 export const fadeLimit = 5;
 
 export const filterOptions = {
-  foods: ['All', ...defaultFoodCategories],
+  foods: ['All', ...defaultFoodCategories.map((category) => category.name)],
   drinks: ['All', 'Water', 'Tea', 'Juice', 'Coffee'],
   smoothies: ['All'],
   vitamins: ['All', 'Omega-3', 'Mineral', 'Vitamin', 'Probiotic', 'Electrolyte'],

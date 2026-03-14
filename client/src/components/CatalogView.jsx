@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { fadeLimit, filterOptions, sectionNames } from '../catalog';
 import { textFor, translations } from '../i18n';
-import { localizedDietDescription, localizedDietName } from '../lib/app-helpers';
+import { localizedDietDescription, localizedDietName, localizedFoodCategoryName } from '../lib/app-helpers';
 import SmoothieSection from './SmoothieSection';
 
 function CatalogView({
@@ -33,7 +33,11 @@ function CatalogView({
   const activeCatalog = catalog[activeDiet] ?? { foods: [], drinks: [], smoothies: [], vitamins: [], spices: [] };
   const visibleDietTypes = dietTypes.filter((dietType) => dietType.visible);
   const activeDietMeta = dietTypes.find((dietType) => dietType.name === activeDiet);
-  const activeFoodOptions = ['All', ...foodCategories];
+  const activeFoodOptions = ['All', ...foodCategories.map((category) => category.name)];
+  const foodCategoryMap = useMemo(
+    () => new Map(foodCategories.map((category) => [category.name, category])),
+    [foodCategories]
+  );
   const [expandedSections, setExpandedSections] = useState({});
   const [shareSearch, setShareSearch] = useState('');
 
@@ -229,7 +233,9 @@ function CatalogView({
                     >
                       {(section === 'foods' ? activeFoodOptions : filterOptions[section]).map((option) => (
                         <option key={option} value={option}>
-                          {t.filters?.[option] ?? translations.en.filters[option] ?? option}
+                          {section === 'foods' && option !== 'All'
+                            ? localizedFoodCategoryName(foodCategoryMap.get(option), language) || option
+                            : t.filters?.[option] ?? translations.en.filters[option] ?? option}
                         </option>
                       ))}
                     </select>
@@ -254,11 +260,15 @@ function CatalogView({
                     value={drafts[section].category}
                     onChange={(event) => handleDraftChange(section, 'category', event.target.value)}
                   >
-                    {(section === 'foods' ? foodCategories : filterOptions[section].filter((option) => option !== 'All')).map((option) => (
-                      <option key={option} value={option}>
-                        {t.filters?.[option] ?? translations.en.filters[option] ?? option}
-                      </option>
-                    ))}
+                    {(section === 'foods'
+                      ? foodCategories.map((category) => category.name)
+                      : filterOptions[section].filter((option) => option !== 'All')).map((option) => (
+                        <option key={option} value={option}>
+                          {section === 'foods'
+                            ? localizedFoodCategoryName(foodCategoryMap.get(option), language) || option
+                            : t.filters?.[option] ?? translations.en.filters[option] ?? option}
+                        </option>
+                      ))}
                   </select>
                   <button type="button" onClick={() => handleAddItem(section)}>
                     {textFor(t, 'add')}
@@ -275,9 +285,11 @@ function CatalogView({
                       <div>
                         <strong>{item.name}</strong>
                         <span>
-                          {t.filters?.[item.category] ??
-                            translations.en.filters[item.category] ??
-                            item.category}
+                          {section === 'foods'
+                            ? localizedFoodCategoryName(foodCategoryMap.get(item.category), language) || item.category
+                            : t.filters?.[item.category] ??
+                              translations.en.filters[item.category] ??
+                              item.category}
                         </span>
                       </div>
                       <button

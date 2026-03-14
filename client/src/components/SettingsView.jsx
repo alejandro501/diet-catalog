@@ -26,12 +26,32 @@ function SettingsView({
             <h2>{textFor(t, 'settingsFoodCategories')}</h2>
             <p className="settings-subtitle">{textFor(t, 'settingsAddCategory')}</p>
             <div className="add-form settings-form">
-              <input
-                type="text"
-                value={newFoodCategory}
-                placeholder={textFor(t, 'settingsCategoryNamePlaceholder')}
-                onChange={(event) => setNewFoodCategory(event.target.value)}
-              />
+              <div className="settings-language-grid">
+                <input
+                  type="text"
+                  value={newFoodCategory.en}
+                  placeholder={`${textFor(t, 'settingsCategoryNamePlaceholder')} (EN)`}
+                  onChange={(event) => setNewFoodCategory((current) => ({ ...current, en: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newFoodCategory.hu}
+                  placeholder="Magyar"
+                  onChange={(event) => setNewFoodCategory((current) => ({ ...current, hu: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newFoodCategory.es}
+                  placeholder="Español"
+                  onChange={(event) => setNewFoodCategory((current) => ({ ...current, es: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newFoodCategory.it}
+                  placeholder="Italiano"
+                  onChange={(event) => setNewFoodCategory((current) => ({ ...current, it: event.target.value }))}
+                />
+              </div>
               <button type="button" onClick={onAddFoodCategory}>
                 {textFor(t, 'settingsAddCategory')}
               </button>
@@ -41,11 +61,32 @@ function SettingsView({
               {foodCategoryDrafts.map((category) => (
                 <div key={category.id} className="settings-row">
                   <div className="settings-row-main">
-                    <input
-                      type="text"
-                      value={category.name}
-                      onChange={(event) => onEditFoodCategory(category.id, event.target.value)}
-                    />
+                    <div className="settings-language-grid">
+                      <input
+                        type="text"
+                        value={category.names?.en ?? category.name}
+                        placeholder="English"
+                        onChange={(event) => onEditFoodCategory(category.id, 'en', event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        value={category.names?.hu ?? ''}
+                        placeholder="Magyar"
+                        onChange={(event) => onEditFoodCategory(category.id, 'hu', event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        value={category.names?.es ?? ''}
+                        placeholder="Español"
+                        onChange={(event) => onEditFoodCategory(category.id, 'es', event.target.value)}
+                      />
+                      <input
+                        type="text"
+                        value={category.names?.it ?? ''}
+                        placeholder="Italiano"
+                        onChange={(event) => onEditFoodCategory(category.id, 'it', event.target.value)}
+                      />
+                    </div>
                   </div>
                   <div className="settings-actions">
                     <button type="button" className="secondary-button" onClick={() => onDeleteFoodCategory(category.id)}>

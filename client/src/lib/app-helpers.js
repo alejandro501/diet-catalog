@@ -129,13 +129,71 @@ export function normalizeDietTypes(rawDietTypes) {
   }));
 }
 
+function categoryIdFromName(name, index = 0) {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return base || `category-${index}`;
+}
+
 export function normalizeFoodCategories(rawFoodCategories) {
   const safe =
     Array.isArray(rawFoodCategories) && rawFoodCategories.length > 0
       ? rawFoodCategories
       : defaultFoodCategories;
 
-  return [...new Set(safe.map((category) => category.trim()).filter(Boolean))];
+  const seen = new Set();
+
+  return safe
+    .map((category, index) => {
+      if (typeof category === 'string') {
+        const trimmed = category.trim();
+
+        if (!trimmed) {
+          return null;
+        }
+
+        const fallback = defaultFoodCategories.find((entry) => entry.name === trimmed);
+        return {
+          id: fallback?.id ?? categoryIdFromName(trimmed, index),
+          name: trimmed,
+          names: {
+            en: fallback?.names?.en ?? trimmed,
+            hu: fallback?.names?.hu ?? '',
+            es: fallback?.names?.es ?? '',
+            it: fallback?.names?.it ?? '',
+          },
+        };
+      }
+
+      const canonicalName = category?.name?.trim() || category?.names?.en?.trim() || '';
+
+      if (!canonicalName) {
+        return null;
+      }
+
+      const fallback = defaultFoodCategories.find((entry) => entry.name === canonicalName);
+
+      return {
+        id: category.id ?? fallback?.id ?? categoryIdFromName(canonicalName, index),
+        name: canonicalName,
+        names: {
+          en: category.names?.en?.trim() ?? fallback?.names?.en ?? canonicalName,
+          hu: category.names?.hu?.trim() ?? fallback?.names?.hu ?? '',
+          es: category.names?.es?.trim() ?? fallback?.names?.es ?? '',
+          it: category.names?.it?.trim() ?? fallback?.names?.it ?? '',
+        },
+      };
+    })
+    .filter(Boolean)
+    .filter((category) => {
+      const key = category.name.toLowerCase();
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
 }
 
 export function localizedDietName(dietType, language) {
@@ -152,6 +210,19 @@ export function localizedDietDescription(dietType, language) {
     dietType?.descriptions?.[language]?.trim() ||
     dietType?.descriptions?.en?.trim() ||
     dietType?.description ||
+    ''
+  );
+}
+
+export function localizedFoodCategoryName(category, language) {
+  if (typeof category === 'string') {
+    return category;
+  }
+
+  return (
+    category?.names?.[language]?.trim() ||
+    category?.names?.en?.trim() ||
+    category?.name ||
     ''
   );
 }

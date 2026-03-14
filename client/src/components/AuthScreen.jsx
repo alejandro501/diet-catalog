@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { textFor, translations } from '../i18n';
 
 function AuthScreen({
@@ -13,6 +14,9 @@ function AuthScreen({
   setAuthValues,
   t,
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <main className="auth-shell">
       <section className="auth-card">
@@ -64,29 +68,47 @@ function AuthScreen({
 
           <label>
             <span>{textFor(t, 'password')}</span>
-            <input
-              type="password"
-              value={authValues.password}
-              onChange={(event) =>
-                setAuthValues((current) => ({ ...current, password: event.target.value }))
-              }
-              required
-              minLength={6}
-            />
+            <div className="input-with-action">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={authValues.password}
+                onChange={(event) =>
+                  setAuthValues((current) => ({ ...current, password: event.target.value }))
+                }
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                className="input-action"
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? textFor(t, 'hidePassword') : textFor(t, 'showPassword')}
+              </button>
+            </div>
           </label>
 
           {authMode === 'sign-up' ? (
             <label>
               <span>{textFor(t, 'confirmPassword')}</span>
-              <input
-                type="password"
-                value={authValues.confirmPassword}
-                onChange={(event) =>
-                  setAuthValues((current) => ({ ...current, confirmPassword: event.target.value }))
-                }
-                required
-                minLength={6}
-              />
+              <div className="input-with-action">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={authValues.confirmPassword}
+                  onChange={(event) =>
+                    setAuthValues((current) => ({ ...current, confirmPassword: event.target.value }))
+                  }
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  className="input-action"
+                  onClick={() => setShowConfirmPassword((current) => !current)}
+                >
+                  {showConfirmPassword ? textFor(t, 'hidePassword') : textFor(t, 'showPassword')}
+                </button>
+              </div>
             </label>
           ) : null}
 

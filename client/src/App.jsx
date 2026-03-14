@@ -28,6 +28,7 @@ import {
 } from './catalog';
 import AuthScreen from './components/AuthScreen';
 import CatalogView from './components/CatalogView';
+import ContactView from './components/ContactView';
 import ProfileView from './components/ProfileView';
 import SettingsView from './components/SettingsView';
 import SharedListsView from './components/SharedListsView';
@@ -72,11 +73,12 @@ const sidebarTitleKeys = {
   users: 'usersTitle',
   shared: 'sharedTitle',
   settings: 'settingsTitle',
+  contact: 'contactTitle',
 };
 
 function createItemDrafts() {
   return {
-    foods: { name: '', category: defaultFoodCategories[0] },
+    foods: { name: '', category: defaultFoodCategories[0].name },
     drinks: { name: '', category: 'Water' },
     vitamins: { name: '', category: 'Vitamin' },
     spices: { name: '', category: 'Herb' },
@@ -84,14 +86,19 @@ function createItemDrafts() {
 }
 
 function createCategoryDrafts(categories = defaultFoodCategories) {
-  return categories.map((category) => ({
-    id: category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    name: category,
-  }));
+  return normalizeFoodCategories(categories);
 }
 
 function createDietNameDraft() {
   return { en: '', hu: '', es: '', it: '' };
+}
+
+function createFoodCategoryDraft() {
+  return { en: '', hu: '', es: '', it: '' };
+}
+
+function createContactDraft() {
+  return { replyTo: '', subject: '', message: '' };
 }
 
 function App() {
@@ -101,7 +108,7 @@ function App() {
   const [newDietName, setNewDietName] = useState(createDietNameDraft);
   const [foodCategories, setFoodCategories] = useState(defaultFoodCategories);
   const [foodCategoryDrafts, setFoodCategoryDrafts] = useState(createCategoryDrafts(defaultFoodCategories));
-  const [newFoodCategory, setNewFoodCategory] = useState('');
+  const [newFoodCategory, setNewFoodCategory] = useState(createFoodCategoryDraft);
   const [activeDiet, setActiveDiet] = useState(defaultDietTypes[0].name);
   const [sharedActiveDiet, setSharedActiveDiet] = useState(defaultDietTypes[0].name);
   const [activeView, setActiveView] = useState('catalog');
@@ -119,6 +126,7 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [profileDraft, setProfileDraft] = useState({ name: '', username: '', isPublic: false });
+  const [contactDraft, setContactDraft] = useState(createContactDraft);
   const [profiles, setProfiles] = useState([]);
   const [incomingShares, setIncomingShares] = useState([]);
   const [outgoingShares, setOutgoingShares] = useState([]);
@@ -154,10 +162,12 @@ function App() {
     }
 
     setDrafts((current) => ({
-      ...current,
+        ...current,
       foods: {
         ...current.foods,
-        category: foodCategories.includes(current.foods.category) ? current.foods.category : foodCategories[0],
+        category: foodCategories.some((category) => category.name === current.foods.category)
+          ? current.foods.category
+          : foodCategories[0].name,
       },
     }));
   }, [foodCategories]);
@@ -176,6 +186,7 @@ function App() {
       setSelectedSharedEntry(null);
       setSharedCatalog(createEmptyCatalog(defaultDietTypes));
       setSharedDietTypes(defaultDietTypes);
+      setContactDraft(createContactDraft());
       return;
     }
 
@@ -209,6 +220,10 @@ function App() {
           username: setup.profile.username,
           isPublic: setup.profile.isPublic === true,
         });
+        setContactDraft((current) => ({
+          ...current,
+          replyTo: current.replyTo || user.email || '',
+        }));
         setCatalog(buildCatalog(ownRows, setup.dietTypes));
         setProfiles(nextProfiles);
         setIncomingShares(shareData.incomingShares);
@@ -865,14 +880,14 @@ function App() {
   }
 
   function handleAddFoodCategory() {
-    const name = newFoodCategory.trim();
+    const englishName = newFoodCategory.en.trim();
 
-    if (!name) {
+    if (!englishName) {
       setMessage(textFor(t, 'settingsCategoryNameRequired'));
       return;
     }
 
-    if (foodCategoryDrafts.some((category) => category.name.toLowerCase() === name.toLowerCase())) {
+    if (foodCategoryDrafts.some((category) => category.name.toLowerCase() === englishName.toLowerCase())) {
       setMessage(textFor(t, 'settingsCategoryNameTaken'));
       return;
     }
@@ -880,16 +895,36 @@ function App() {
     setFoodCategoryDrafts((current) => [
       ...current,
       {
-        id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        name,
+        id: englishName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: englishName,
+        names: {
+          en: englishName,
+          hu: newFoodCategory.hu.trim(),
+          es: newFoodCategory.es.trim(),
+          it: newFoodCategory.it.trim(),
+        },
       },
     ]);
-    setNewFoodCategory('');
+    setNewFoodCategory(createFoodCategoryDraft());
   }
 
-  function handleEditFoodCategory(categoryId, value) {
+  function handleEditFoodCategory(categoryId, languageCode, value) {
     setFoodCategoryDrafts((current) =>
-      current.map((category) => (category.id === categoryId ? { ...category, name: value } : category))
+      current.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              name: languageCode === 'en' ? value : category.name,
+              names: {
+                en: category.names?.en ?? category.name,
+                hu: category.names?.hu ?? '',
+                es: category.names?.es ?? '',
+                it: category.names?.it ?? '',
+                [languageCode]: value,
+              },
+            }
+          : category
+      )
     );
   }
 
@@ -958,7 +993,18 @@ function App() {
         it: dietType.names?.it?.trim() ?? '',
       },
     }));
-    const cleanedFoodCategories = normalizeFoodCategories(foodCategoryDrafts.map((category) => category.name));
+    const cleanedFoodCategories = normalizeFoodCategories(
+      foodCategoryDrafts.map((category) => ({
+        ...category,
+        name: (category.names?.en ?? category.name).trim(),
+        names: {
+          en: (category.names?.en ?? category.name).trim(),
+          hu: category.names?.hu?.trim() ?? '',
+          es: category.names?.es?.trim() ?? '',
+          it: category.names?.it?.trim() ?? '',
+        },
+      }))
+    );
 
     if (cleanedDietDrafts.some((dietType) => !dietType.name)) {
       setMessage(textFor(t, 'settingsDietNameRequired'));
@@ -1011,6 +1057,34 @@ function App() {
       setMessage(textFor(t, 'settingsSaved'));
     } catch (error) {
       setMessage(formatFirebaseError(error, t));
+    }
+  }
+
+  function handleContactDraftChange(key, value) {
+    setContactDraft((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function handleContactSubmit() {
+    const recipient = 'x00alejandro501@gmail.com';
+    const subject = contactDraft.subject.trim() || 'Diet Catalog message';
+    const lines = [];
+
+    if (contactDraft.replyTo.trim()) {
+      lines.push(`Reply to: ${contactDraft.replyTo.trim()}`);
+      lines.push('');
+    }
+
+    lines.push(contactDraft.message.trim() || '');
+
+    const href = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+      lines.join('\n')
+    )}`;
+
+    if (typeof window !== 'undefined') {
+      window.location.href = href;
     }
   }
 
@@ -1088,6 +1162,13 @@ function App() {
               <small>@{profile?.username || 'username'}</small>
             </div>
           </div>
+          <button
+            type="button"
+            className={activeView === 'contact' ? 'menu-link active footer-link' : 'menu-link footer-link'}
+            onClick={() => setActiveView('contact')}
+          >
+            {textFor(t, 'contactTitle')}
+          </button>
           <label className="language-control sidebar-language">
             <span>{textFor(t, 'language')}</span>
             <select value={language} onChange={(event) => changeLanguage(event.target.value)}>
@@ -1211,6 +1292,15 @@ function App() {
             onToggleDietVisibility={handleToggleDietVisibility}
             setNewDietName={setNewDietName}
             setNewFoodCategory={setNewFoodCategory}
+            t={t}
+          />
+        ) : null}
+
+        {activeView === 'contact' ? (
+          <ContactView
+            contactDraft={contactDraft}
+            onChange={handleContactDraftChange}
+            onSubmit={handleContactSubmit}
             t={t}
           />
         ) : null}
