@@ -24,6 +24,19 @@ function SettingsView({
         <div className="settings-columns">
           <section className="settings-column">
             <h2>{textFor(t, 'settingsFoodCategories')}</h2>
+            <p className="settings-subtitle">{textFor(t, 'settingsAddCategory')}</p>
+            <div className="add-form settings-form">
+              <input
+                type="text"
+                value={newFoodCategory}
+                placeholder={textFor(t, 'settingsCategoryNamePlaceholder')}
+                onChange={(event) => setNewFoodCategory(event.target.value)}
+              />
+              <button type="button" onClick={onAddFoodCategory}>
+                {textFor(t, 'settingsAddCategory')}
+              </button>
+            </div>
+
             <div className="settings-list">
               {foodCategoryDrafts.map((category) => (
                 <div key={category.id} className="settings-row">
@@ -42,22 +55,43 @@ function SettingsView({
                 </div>
               ))}
             </div>
-
-            <div className="add-form settings-form">
-              <input
-                type="text"
-                value={newFoodCategory}
-                placeholder={textFor(t, 'settingsCategoryNamePlaceholder')}
-                onChange={(event) => setNewFoodCategory(event.target.value)}
-              />
-              <button type="button" onClick={onAddFoodCategory}>
-                {textFor(t, 'settingsAddCategory')}
-              </button>
-            </div>
           </section>
 
           <section className="settings-column">
             <h2>{textFor(t, 'settingsDietTypes')}</h2>
+            <p className="settings-subtitle">{textFor(t, 'settingsAddDiet')}</p>
+            <div className="add-form settings-form">
+              <div className="settings-language-grid">
+                <input
+                  type="text"
+                  value={newDietName.en}
+                  placeholder={`${textFor(t, 'settingsDietNamePlaceholder')} (EN)`}
+                  onChange={(event) => setNewDietName((current) => ({ ...current, en: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newDietName.hu}
+                  placeholder="Magyar"
+                  onChange={(event) => setNewDietName((current) => ({ ...current, hu: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newDietName.es}
+                  placeholder="Español"
+                  onChange={(event) => setNewDietName((current) => ({ ...current, es: event.target.value }))}
+                />
+                <input
+                  type="text"
+                  value={newDietName.it}
+                  placeholder="Italiano"
+                  onChange={(event) => setNewDietName((current) => ({ ...current, it: event.target.value }))}
+                />
+              </div>
+              <button type="button" onClick={onAddDietType}>
+                {textFor(t, 'settingsAddDiet')}
+              </button>
+            </div>
+
             <div className="settings-list">
               {dietDrafts.map((dietType) => (
                 <div key={dietType.id} className="settings-row">
@@ -104,38 +138,6 @@ function SettingsView({
                   </div>
                 </div>
               ))}
-            </div>
-
-            <div className="add-form settings-form">
-              <div className="settings-language-grid">
-                <input
-                  type="text"
-                  value={newDietName.en}
-                  placeholder={`${textFor(t, 'settingsDietNamePlaceholder')} (EN)`}
-                  onChange={(event) => setNewDietName((current) => ({ ...current, en: event.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={newDietName.hu}
-                  placeholder="Magyar"
-                  onChange={(event) => setNewDietName((current) => ({ ...current, hu: event.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={newDietName.es}
-                  placeholder="Español"
-                  onChange={(event) => setNewDietName((current) => ({ ...current, es: event.target.value }))}
-                />
-                <input
-                  type="text"
-                  value={newDietName.it}
-                  placeholder="Italiano"
-                  onChange={(event) => setNewDietName((current) => ({ ...current, it: event.target.value }))}
-                />
-              </div>
-              <button type="button" onClick={onAddDietType}>
-                {textFor(t, 'settingsAddDiet')}
-              </button>
             </div>
           </section>
         </div>

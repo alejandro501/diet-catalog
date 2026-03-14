@@ -122,7 +122,7 @@ export const defaultDietTypes = [
   },
 ];
 
-export const sectionNames = ['foods', 'drinks', 'smoothies', 'vitamins', 'spices'];
+export const sectionNames = ['foods', 'drinks', 'smoothies', 'spices', 'vitamins'];
 export const defaultFoodCategories = ['Fruits', 'Vegetables', 'Side Dish', 'Protein', 'Grains'];
 export const fadeLimit = 5;
 

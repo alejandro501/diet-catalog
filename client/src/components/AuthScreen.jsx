@@ -1,10 +1,13 @@
-import { textFor } from '../i18n';
+import { textFor, translations } from '../i18n';
 
 function AuthScreen({
   authMode,
   authValues,
   isSubmitting,
+  language,
+  languageOptions,
   message,
+  onChangeLanguage,
   onSubmit,
   setAuthMode,
   setAuthValues,
@@ -13,6 +16,18 @@ function AuthScreen({
   return (
     <main className="auth-shell">
       <section className="auth-card">
+        <div className="topbar auth-topbar">
+          <label className="language-control topbar-language auth-language">
+            <span>{textFor(t, 'language')}</span>
+            <select value={language} onChange={(event) => onChangeLanguage(event.target.value)}>
+              {languageOptions.map((option) => (
+                <option key={option} value={option}>
+                  {t.languages?.[option] ?? translations.en.languages[option]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
         <p className="eyebrow">{textFor(t, 'appTitle')}</p>
         <h1>{textFor(t, 'authTitle')}</h1>
         <p className="auth-copy">{textFor(t, 'authCopy')}</p>

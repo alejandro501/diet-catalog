@@ -66,6 +66,14 @@ const menuItems = [
   { id: 'settings', textKey: 'menuSettings' },
 ];
 
+const sidebarTitleKeys = {
+  profile: 'profileTitle',
+  catalog: 'menuCatalog',
+  users: 'usersTitle',
+  shared: 'sharedTitle',
+  settings: 'settingsTitle',
+};
+
 function createItemDrafts() {
   return {
     foods: { name: '', category: defaultFoodCategories[0] },
@@ -234,10 +242,11 @@ function App() {
   }, [activeView]);
 
   const t = translations[language];
+  const sidebarTitle = textFor(t, sidebarTitleKeys[activeView] ?? 'appTitle');
 
   const publicProfiles = useMemo(() => {
-    return profiles.filter((profileEntry) => profileEntry.isPublic);
-  }, [profiles]);
+    return profiles.filter((profileEntry) => profileEntry.isPublic || profileEntry.id === user?.uid);
+  }, [profiles, user?.uid]);
 
   const shareableProfiles = useMemo(() => {
     return profiles.filter((profileEntry) => profileEntry.isPublic && profileEntry.id !== user?.uid);
@@ -1021,7 +1030,10 @@ function App() {
         authMode={authMode}
         authValues={authValues}
         isSubmitting={isSubmitting}
+        language={language}
+        languageOptions={languageOptions}
         message={message}
+        onChangeLanguage={changeLanguage}
         onSubmit={handleAuthSubmit}
         setAuthMode={setAuthMode}
         setAuthValues={setAuthValues}
@@ -1047,7 +1059,7 @@ function App() {
           <div className="sidebar-topbar">
             <div>
               <p className="eyebrow">{textFor(t, 'appTitle')}</p>
-              <h1>{textFor(t, 'appTitle')}</h1>
+              <h1>{sidebarTitle}</h1>
             </div>
           </div>
 

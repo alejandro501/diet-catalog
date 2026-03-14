@@ -355,7 +355,6 @@ select {
 
 .hero-row,
 .card-header,
-.item-row,
 .add-form,
 .user-row {
   display: flex;
@@ -396,6 +395,11 @@ select {
 }
 
 .compact-share-toggle strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.share-toggle strong {
   display: block;
   margin-bottom: 4px;
 }
@@ -606,11 +610,14 @@ select {
 }
 
 .item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.75);
-  align-items: flex-start;
+  align-items: center;
 }
 
 .item-row strong,
@@ -619,7 +626,7 @@ select {
 }
 
 .read-only-item {
-  justify-content: flex-start;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .empty-state,
@@ -775,6 +782,12 @@ select {
 .settings-column h2 {
   margin: 0;
   font-size: 1.15rem;
+}
+
+.settings-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 .settings-row {
@@ -1067,7 +1080,6 @@ select {
 
   .hero-row,
   .card-header,
-  .item-row,
   .user-row,
   .profile-preview {
     flex-direction: column;
@@ -1080,12 +1092,30 @@ select {
   .smoothie-ingredient-builder,
   .settings-form,
   .settings-language-grid,
-  .settings-actions,
-  .settings-row,
   .smoothie-header {
     grid-template-columns: 1fr;
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .settings-row {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .settings-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    width: auto;
+    margin-left: auto;
+  }
+
+  .settings-actions .secondary-button {
+    width: auto;
+    padding: 8px 10px;
+    font-size: 0.9rem;
   }
 
   .smoothie-actions {
@@ -1145,6 +1175,8 @@ select {
   .item-row {
     gap: 10px;
     padding: 14px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
   }
 
   .remove-button,
