@@ -5,6 +5,7 @@ import CatalogView from './CatalogView';
 
 function SharedListsView({
   activeDiet,
+  language,
   loading,
   onSelectProfile,
   selectedProfile,
@@ -54,8 +55,9 @@ function SharedListsView({
               drinks: { name: '', category: 'Water' },
               smoothies: { name: '', category: 'Smoothie' },
               vitamins: { name: '', category: 'Vitamin' },
+              spices: { name: '', category: 'Herb' },
             }}
-            filters={{ foods: 'All', drinks: 'All', smoothies: 'All', vitamins: 'All' }}
+            filters={{ foods: 'All', drinks: 'All', smoothies: 'All', vitamins: 'All', spices: 'All' }}
             foodCategories={[]}
             handleAddItem={() => {}}
             handleAddSmoothie={() => {}}
@@ -64,6 +66,7 @@ function SharedListsView({
             handleRemoveItem={() => {}}
             handleRemoveSmoothie={() => {}}
             handleRemoveSmoothieIngredient={() => {}}
+            language={language}
             readOnly
             setActiveDiet={setActiveDiet}
             setFilters={() => {}}

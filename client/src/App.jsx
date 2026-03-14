@@ -69,6 +69,7 @@ function createItemDrafts() {
     foods: { name: '', category: defaultFoodCategories[0] },
     drinks: { name: '', category: 'Water' },
     vitamins: { name: '', category: 'Vitamin' },
+    spices: { name: '', category: 'Herb' },
   };
 }
 
@@ -79,11 +80,15 @@ function createCategoryDrafts(categories = defaultFoodCategories) {
   }));
 }
 
+function createDietNameDraft() {
+  return { en: '', hu: '', es: '', it: '' };
+}
+
 function App() {
   const [catalog, setCatalog] = useState(createEmptyCatalog(defaultDietTypes));
   const [dietTypes, setDietTypes] = useState(defaultDietTypes);
   const [dietDrafts, setDietDrafts] = useState(defaultDietTypes);
-  const [newDietName, setNewDietName] = useState('');
+  const [newDietName, setNewDietName] = useState(createDietNameDraft);
   const [foodCategories, setFoodCategories] = useState(defaultFoodCategories);
   const [foodCategoryDrafts, setFoodCategoryDrafts] = useState(createCategoryDrafts(defaultFoodCategories));
   const [newFoodCategory, setNewFoodCategory] = useState('');
@@ -91,7 +96,7 @@ function App() {
   const [sharedActiveDiet, setSharedActiveDiet] = useState(defaultDietTypes[0].name);
   const [activeView, setActiveView] = useState('catalog');
   const [language, setLanguage] = useState(() => readStoredLanguage(LANGUAGE_STORAGE_KEY));
-  const [filters, setFilters] = useState({ foods: 'All', drinks: 'All', vitamins: 'All' });
+  const [filters, setFilters] = useState({ foods: 'All', drinks: 'All', vitamins: 'All', spices: 'All' });
   const [drafts, setDrafts] = useState(createItemDrafts);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -576,14 +581,14 @@ function App() {
   }
 
   function handleAddDietType() {
-    const name = newDietName.trim();
+    const englishName = newDietName.en.trim();
 
-    if (!name) {
+    if (!englishName) {
       setMessage(textFor(t, 'settingsDietNameRequired'));
       return;
     }
 
-    if (dietDrafts.some((dietType) => dietType.name.toLowerCase() === name.toLowerCase())) {
+    if (dietDrafts.some((dietType) => dietType.name.toLowerCase() === englishName.toLowerCase())) {
       setMessage(textFor(t, 'settingsDietNameTaken'));
       return;
     }
@@ -591,12 +596,24 @@ function App() {
     setDietDrafts((current) => [
       ...current,
       {
-        id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        name,
+        id: englishName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: englishName,
+        names: {
+          en: englishName,
+          hu: newDietName.hu.trim(),
+          es: newDietName.es.trim(),
+          it: newDietName.it.trim(),
+        },
+        descriptions: {
+          en: '',
+          hu: '',
+          es: '',
+          it: '',
+        },
         visible: true,
       },
     ]);
-    setNewDietName('');
+    setNewDietName(createDietNameDraft());
   }
 
   function handleAddFoodCategory() {
@@ -653,9 +670,23 @@ function App() {
     });
   }
 
-  function handleEditDietType(dietId, value) {
+  function handleEditDietType(dietId, languageCode, value) {
     setDietDrafts((current) =>
-      current.map((dietType) => (dietType.id === dietId ? { ...dietType, name: value } : dietType))
+      current.map((dietType) =>
+        dietType.id === dietId
+          ? {
+              ...dietType,
+              name: languageCode === 'en' ? value : dietType.name,
+              names: {
+                en: dietType.names?.en ?? dietType.name,
+                hu: dietType.names?.hu ?? '',
+                es: dietType.names?.es ?? '',
+                it: dietType.names?.it ?? '',
+                [languageCode]: value,
+              },
+            }
+          : dietType
+      )
     );
   }
 
@@ -671,7 +702,13 @@ function App() {
 
     const cleanedDietDrafts = dietDrafts.map((dietType) => ({
       ...dietType,
-      name: dietType.name.trim(),
+      name: (dietType.names?.en ?? dietType.name).trim(),
+      names: {
+        en: (dietType.names?.en ?? dietType.name).trim(),
+        hu: dietType.names?.hu?.trim() ?? '',
+        es: dietType.names?.es?.trim() ?? '',
+        it: dietType.names?.it?.trim() ?? '',
+      },
     }));
     const cleanedFoodCategories = normalizeFoodCategories(foodCategoryDrafts.map((category) => category.name));
 
@@ -844,6 +881,7 @@ function App() {
             handleRemoveItem={handleRemoveItem}
             handleRemoveSmoothie={handleRemoveSmoothie}
             handleRemoveSmoothieIngredient={handleRemoveSmoothieIngredient}
+            language={language}
             setActiveDiet={setActiveDiet}
             setFilters={setFilters}
             t={t}
@@ -863,6 +901,7 @@ function App() {
         {activeView === 'shared' ? (
           <SharedListsView
             activeDiet={sharedActiveDiet}
+            language={language}
             loading={sharedLoading}
             onSelectProfile={handleOpenShared}
             selectedProfile={selectedSharedProfile}

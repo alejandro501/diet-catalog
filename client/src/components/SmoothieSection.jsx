@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { fadeLimit } from '../catalog';
 import { textFor } from '../i18n';
 
 function SmoothieSection({
@@ -14,6 +15,7 @@ function SmoothieSection({
   const [draftIngredient, setDraftIngredient] = useState('');
   const [draftIngredients, setDraftIngredients] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [expandedList, setExpandedList] = useState(false);
 
   function handleQueueIngredient() {
     const nextIngredient = draftIngredient.trim();
@@ -54,7 +56,7 @@ function SmoothieSection({
       </div>
 
       {!readOnly ? (
-        <div className="smoothie-form">
+        <div className="smoothie-form smoothie-builder">
           <input
             type="text"
             value={draftName}
@@ -62,7 +64,7 @@ function SmoothieSection({
             onChange={(event) => setDraftName(event.target.value)}
           />
 
-          <div className="compact-form">
+          <div className="smoothie-inline-form">
             <input
               type="text"
               value={draftIngredient}
@@ -106,15 +108,17 @@ function SmoothieSection({
         {smoothies.length === 0 ? (
           <li className="empty-state">{textFor(t, 'noItems')}</li>
         ) : (
-          smoothies.map((smoothie) => {
+          (expandedList ? smoothies : smoothies.slice(0, fadeLimit)).map((smoothie) => {
             const isExpanded = expandedId === smoothie.id;
 
             return (
               <li key={smoothie.id} className="smoothie-card">
                 <div className="smoothie-header">
-                  <div>
+                  <div className="smoothie-meta">
                     <strong>{smoothie.name}</strong>
-                    <span>{smoothie.ingredients.length} ingredients</span>
+                    <span>
+                      {smoothie.ingredients.length} {textFor(t, 'smoothieIngredients').toLowerCase()}
+                    </span>
                   </div>
                   <div className="smoothie-actions">
                     <button
@@ -160,7 +164,7 @@ function SmoothieSection({
                     )}
 
                     {!readOnly ? (
-                      <div className="compact-form">
+                      <div className="smoothie-inline-form">
                         <input
                           type="text"
                           placeholder={textFor(t, 'smoothieIngredientPlaceholder')}
@@ -190,6 +194,17 @@ function SmoothieSection({
           })
         )}
       </ul>
+      {smoothies.length > fadeLimit ? (
+        <div className={!expandedList ? 'section-fade-wrap active' : 'section-fade-wrap'}>
+          <button
+            type="button"
+            className="secondary-button section-toggle"
+            onClick={() => setExpandedList((current) => !current)}
+          >
+            {expandedList ? textFor(t, 'sectionCollapse') : textFor(t, 'sectionExpand')}
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }

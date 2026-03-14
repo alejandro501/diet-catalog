@@ -1,4 +1,4 @@
-import { defaultDietTypes, defaultFoodCategories, languageOptions } from '../catalog';
+import { canonicalDietName, defaultDietTypes, defaultFoodCategories, languageOptions } from '../catalog';
 import { textFor, translations } from '../i18n';
 
 export function readStoredLanguage(storageKey) {
@@ -86,11 +86,40 @@ export function sortProfiles(profiles) {
 
 export function normalizeDietTypes(rawDietTypes) {
   const safe = Array.isArray(rawDietTypes) && rawDietTypes.length > 0 ? rawDietTypes : defaultDietTypes;
+  const defaultById = new Map(defaultDietTypes.map((dietType) => [dietType.id, dietType]));
+  const defaultByName = new Map(
+    defaultDietTypes.map((dietType) => [canonicalDietName(dietType.name), dietType])
+  );
+
   return safe.map((dietType, index) => ({
-    id: dietType.id || `${dietType.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'diet'}-${index}`,
-    name: dietType.name || `Diet ${index + 1}`,
-    visible: dietType.visible !== false,
-    description: dietType.description ?? '',
+    ...(() => {
+      const canonicalName = canonicalDietName(dietType.name || `Diet ${index + 1}`);
+      const fallback =
+        (dietType.id && defaultById.get(dietType.id)) ||
+        defaultByName.get(canonicalName);
+      const nextId =
+        dietType.id ||
+        fallback?.id ||
+        `${canonicalName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'diet'}-${index}`;
+
+      return {
+        id: nextId,
+        name: canonicalName,
+        names: {
+          en: dietType.names?.en ?? fallback?.names?.en ?? canonicalName,
+          hu: dietType.names?.hu ?? fallback?.names?.hu ?? '',
+          es: dietType.names?.es ?? fallback?.names?.es ?? '',
+          it: dietType.names?.it ?? fallback?.names?.it ?? '',
+        },
+        visible: dietType.visible !== false,
+        descriptions: {
+          en: dietType.descriptions?.en ?? dietType.description ?? fallback?.descriptions?.en ?? '',
+          hu: dietType.descriptions?.hu ?? fallback?.descriptions?.hu ?? '',
+          es: dietType.descriptions?.es ?? fallback?.descriptions?.es ?? '',
+          it: dietType.descriptions?.it ?? fallback?.descriptions?.it ?? '',
+        },
+      };
+    })(),
   }));
 }
 
@@ -101,6 +130,24 @@ export function normalizeFoodCategories(rawFoodCategories) {
       : defaultFoodCategories;
 
   return [...new Set(safe.map((category) => category.trim()).filter(Boolean))];
+}
+
+export function localizedDietName(dietType, language) {
+  return (
+    dietType?.names?.[language]?.trim() ||
+    dietType?.names?.en?.trim() ||
+    dietType?.name ||
+    ''
+  );
+}
+
+export function localizedDietDescription(dietType, language) {
+  return (
+    dietType?.descriptions?.[language]?.trim() ||
+    dietType?.descriptions?.en?.trim() ||
+    dietType?.description ||
+    ''
+  );
 }
 
 export { translations };

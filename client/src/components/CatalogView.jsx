@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { filterOptions, sectionNames } from '../catalog';
+import { useMemo, useState } from 'react';
+import { fadeLimit, filterOptions, sectionNames } from '../catalog';
 import { textFor, translations } from '../i18n';
+import { localizedDietDescription, localizedDietName } from '../lib/app-helpers';
 import SmoothieSection from './SmoothieSection';
 
 function CatalogView({
@@ -17,15 +18,17 @@ function CatalogView({
   handleRemoveSmoothie,
   handleAddSmoothieIngredient,
   handleRemoveSmoothieIngredient,
+  language,
   readOnly = false,
   setActiveDiet,
   setFilters,
   t,
 }) {
-  const activeCatalog = catalog[activeDiet] ?? { foods: [], drinks: [], smoothies: [], vitamins: [] };
+  const activeCatalog = catalog[activeDiet] ?? { foods: [], drinks: [], smoothies: [], vitamins: [], spices: [] };
   const visibleDietTypes = dietTypes.filter((dietType) => dietType.visible);
   const activeDietMeta = dietTypes.find((dietType) => dietType.name === activeDiet);
   const activeFoodOptions = ['All', ...foodCategories];
+  const [expandedSections, setExpandedSections] = useState({});
 
   const filteredSections = useMemo(() => {
     return sectionNames.filter((section) => section !== 'smoothies').reduce((acc, section) => {
@@ -48,14 +51,17 @@ function CatalogView({
               className={dietType.name === activeDiet ? 'diet-link active' : 'diet-link'}
               onClick={() => setActiveDiet(dietType.name)}
             >
-              <span>{dietType.name}</span>
-              <small>
-                {(catalog[dietType.name]?.foods.length ?? 0) +
-                  (catalog[dietType.name]?.drinks.length ?? 0) +
-                  (catalog[dietType.name]?.smoothies.length ?? 0) +
-                  (catalog[dietType.name]?.vitamins.length ?? 0)}{' '}
-                {textFor(t, 'items')}
-              </small>
+              <span className="diet-link-title">{localizedDietName(dietType, language)}</span>
+              <span className="diet-link-meta">
+                <strong>
+                  {(catalog[dietType.name]?.foods.length ?? 0) +
+                    (catalog[dietType.name]?.drinks.length ?? 0) +
+                    (catalog[dietType.name]?.smoothies.length ?? 0) +
+                    (catalog[dietType.name]?.vitamins.length ?? 0) +
+                    (catalog[dietType.name]?.spices.length ?? 0)}
+                </strong>
+                <small>{textFor(t, 'items')}</small>
+              </span>
             </button>
           ))}
         </div>
@@ -65,8 +71,10 @@ function CatalogView({
         <section className="hero-card">
           <div className="hero-row">
             <div>
-              <h2>{activeDiet}</h2>
-              {activeDietMeta?.description ? <p>{activeDietMeta.description}</p> : null}
+              <h2>{localizedDietName(activeDietMeta, language) || activeDiet}</h2>
+              {localizedDietDescription(activeDietMeta, language) ? (
+                <p>{localizedDietDescription(activeDietMeta, language)}</p>
+              ) : null}
             </div>
             <div className="hero-stats">
               <div>
@@ -85,12 +93,22 @@ function CatalogView({
                 <strong>{activeCatalog.smoothies.length}</strong>
                 <span>{textFor(t, 'smoothies')}</span>
               </div>
+              <div>
+                <strong>{activeCatalog.spices.length}</strong>
+                <span>{textFor(t, 'spices')}</span>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="section-grid">
-          {sectionNames.filter((section) => section !== 'smoothies').map((section) => (
+          {sectionNames.filter((section) => section !== 'smoothies').map((section) => {
+            const sectionItems = filteredSections[section];
+            const isExpanded = expandedSections[section] ?? false;
+            const shouldClamp = sectionItems.length > fadeLimit && !isExpanded;
+            const visibleItems = shouldClamp ? sectionItems.slice(0, fadeLimit) : sectionItems;
+
+            return (
             <article key={section} className="catalog-card">
               <div className="card-header">
                 <div>
@@ -150,10 +168,10 @@ function CatalogView({
               ) : null}
 
               <ul className="item-list">
-                {filteredSections[section].length === 0 ? (
+                {visibleItems.length === 0 ? (
                   <li className="empty-state">{textFor(t, 'noItems')}</li>
                 ) : (
-                  filteredSections[section].map((item) => (
+                  visibleItems.map((item) => (
                     <li key={item.id} className="item-row">
                       <div>
                         <strong>{item.name}</strong>
@@ -174,8 +192,25 @@ function CatalogView({
                   ))
                 )}
               </ul>
+
+              {sectionItems.length > fadeLimit ? (
+                <div className={shouldClamp ? 'section-fade-wrap active' : 'section-fade-wrap'}>
+                  <button
+                    type="button"
+                    className="secondary-button section-toggle"
+                    onClick={() =>
+                      setExpandedSections((current) => ({
+                        ...current,
+                        [section]: !isExpanded,
+                      }))
+                    }
+                  >
+                    {isExpanded ? textFor(t, 'sectionCollapse') : textFor(t, 'sectionExpand')}
+                  </button>
+                </div>
+              ) : null}
             </article>
-          ))}
+          )})}
 
           <SmoothieSection
             smoothies={activeCatalog.smoothies}
@@ -183,6 +218,7 @@ function CatalogView({
             onRemoveSmoothie={handleRemoveSmoothie}
             onAddIngredient={handleAddSmoothieIngredient}
             onRemoveIngredient={handleRemoveSmoothieIngredient}
+            language={language}
             readOnly={readOnly}
             t={t}
           />
